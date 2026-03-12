@@ -1,0 +1,50 @@
+{
+  "best_model": "Gradient Boosting",
+  "features": [
+    "hour",
+    "day_of_week",
+    "month",
+    "temperature",
+    "rainfall",
+    "vehicle_count",
+    "avg_speed",
+    "road_capacity",
+    "is_holiday",
+    "is_weekend",
+    "special_event",
+    "road_type_enc",
+    "lane_count",
+    "accidents_nearby"
+  ],
+  "classes": [
+    "Low",
+    "Medium",
+    "High",
+    "Critical"
+  ],
+  "trained_at": "2026-03-09T21:51:27.616998",
+  "dataset_size": 5000,
+  "all_results": {
+    "Random Forest": {
+      "accuracy": 0.96,
+      "precision": 0.96,
+      "recall": 0.96,
+      "f1": 0.96,
+      "cv_mean": 0.935
+    },
+    "Gradient Boosting": {
+      "accuracy": 0.968,
+      "precision": 0.968,
+      "recall": 0.968,
+      "f1": 0.968,
+      "cv_mean": 0.9515
+    },
+    "Logistic Regression": {
+      "accuracy": 0.951,
+      "precision": 0.9511,
+      "recall": 0.951,
+      "f1": 0.951,
+      "cv_mean": 0.9462
+    }
+  }
+}

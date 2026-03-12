@@ -1,0 +1,194 @@
+
+╔══════════════════════════════════════════════════════════════════╗
+║         TrafficMind AI — Tamil Nadu Traffic Prediction           ║
+║                   HOW TO RUN ON YOUR LAPTOP                      ║
+║                    Created by LALITH KRISH                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PROJECT FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TrafficMind_AI/
+  ├── dashboard.html      ← Open this in your browser
+  ├── train_model.py      ← Run this FIRST (trains AI model)
+  ├── api.py              ← Run this SECOND (starts REST API)
+  ├── predict.py          ← Optional CLI prediction tool
+  ├── requirements.txt    ← Python packages list
+  ├── data/               ← Put your CSV files here
+  └── models/             ← AI model saved here automatically
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ Python 3.9 or higher   → https://python.org/downloads
+  ✅ Any web browser         → Chrome / Firefox / Edge
+  ✅ Internet connection     → For map tiles and fonts
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ STEP-BY-STEP: HOW TO RUN (Command Prompt)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ ┌─────────────────────────────────────────────────────────────┐
+ │  STEP 1 — Open Command Prompt                               │
+ └─────────────────────────────────────────────────────────────┘
+
+   Windows:
+     Press  Win + R  →  type  cmd  →  press Enter
+
+   Mac / Linux:
+     Open Terminal app
+
+ ┌─────────────────────────────────────────────────────────────┐
+ │  STEP 2 — Go to Project Folder                              │
+ └─────────────────────────────────────────────────────────────┘
+
+   Windows:
+     cd C:\Users\YourName\Downloads\TrafficMind_AI
+
+   Mac / Linux:
+     cd ~/Downloads/TrafficMind_AI
+
+   (Change the path to wherever you extracted the ZIP file)
+
+ ┌─────────────────────────────────────────────────────────────┐
+ │  STEP 3 — Install Python Packages (Run ONCE only)           │
+ └─────────────────────────────────────────────────────────────┘
+
+     pip install -r requirements.txt
+
+   If pip not found, try:
+     python -m pip install -r requirements.txt
+
+   Wait for all packages to install (takes 1-2 minutes)
+
+ ┌─────────────────────────────────────────────────────────────┐
+ │  STEP 4 — Train the AI Model                                │
+ └─────────────────────────────────────────────────────────────┘
+
+     python train_model.py
+
+   You will see output like:
+     [TRAIN] Generating 5000 Tamil Nadu traffic records...
+     [TRAIN] Training Random Forest...
+     [RESULT] Random Forest — Accuracy: 92.64%  F1: 0.9261
+     [BEST] Random Forest selected as best model
+     [DONE] Model saved! Now run: python api.py
+
+   ✅ This creates the  models/  folder automatically
+   ⏱  Takes about 30-60 seconds
+
+ ┌─────────────────────────────────────────────────────────────┐
+ │  STEP 5 — Start the API Server                              │
+ └─────────────────────────────────────────────────────────────┘
+
+   Open a NEW command prompt window (keep this one open!)
+   Navigate to the project folder again, then run:
+
+     python api.py
+
+   You will see:
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      TrafficMind AI  — API Server
+      URL  : http://localhost:8000
+      Docs : http://localhost:8000/docs
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ✅ Keep this window OPEN while using the dashboard!
+
+ ┌─────────────────────────────────────────────────────────────┐
+ │  STEP 6 — Open the Dashboard                                │
+ └─────────────────────────────────────────────────────────────┘
+
+   Double-click  dashboard.html  to open in your browser
+   OR drag it into Chrome / Firefox
+
+   Dashboard URL will look like:
+     file:///C:/Users/YourName/Downloads/TrafficMind_AI/dashboard.html
+
+   ✅ You will see "API: ONLINE" in the top right corner
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ QUICK COMMANDS SUMMARY (Copy & Paste)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   # Terminal / CMD Window 1:
+   cd TrafficMind_AI
+   pip install -r requirements.txt
+   python train_model.py
+
+   # Terminal / CMD Window 2:
+   cd TrafficMind_AI
+   python api.py
+
+   # Then open dashboard.html in browser
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ USING THE DASHBOARD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ⚡ Predict Tab
+      → Select district, vehicle type, road details
+      → Click PREDICT CONGESTION
+      → See result: Low / Medium / High / Critical
+
+   🗺 Route Map Tab
+      → Enter Source city (e.g. Chennai)
+      → Enter Destination city (e.g. Coimbatore)
+      → Click Show Route
+      → See India map with animated WAVE LINE showing traffic!
+      → Green wave = free, Yellow = slow, Orange = heavy, Red = jam
+
+   📡 Live Monitor Tab
+      → Auto-updates every 5 seconds
+      → Shows 10 major TN cities live status
+
+   📂 CSV Import Tab
+      → Upload your own real traffic data CSV
+      → Download sample CSV template
+
+   🧠 Models Tab
+      → Compare all 3 trained models
+      → Random Forest, Gradient Boosting, Logistic Regression
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ❌ "python not found"
+      → Try:  python3 train_model.py
+      → Or install Python from https://python.org
+
+   ❌ "pip not found"
+      → Try:  python -m pip install -r requirements.txt
+
+   ❌ "Port 8000 in use"
+      → Try:  python api.py --port 8001
+      → Then open dashboard.html and change localhost:8000 to 8001
+
+   ❌ "API: OFFLINE" in dashboard
+      → Make sure api.py is still running in second CMD window
+      → Dashboard still works offline using built-in prediction
+
+   ❌ "No module named sklearn"
+      → Run:  pip install -r requirements.txt  again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ MODEL ACCURACY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Model                  Accuracy    F1 Score
+   ─────────────────────────────────────────────
+   Random Forest ★        92.64%      0.9261
+   Gradient Boosting      90.81%      0.9078
+   Logistic Regression    76.34%      0.7609
+
+   ★ Random Forest is used by default (best accuracy)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Created by LALITH KRISH  |  TrafficMind AI v3.0
+  38 Tamil Nadu Districts  |  India SVG Map  |  Wave Traffic Lines
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

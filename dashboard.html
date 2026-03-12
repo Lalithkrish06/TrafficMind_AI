@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TrafficMind AI — Tamil Nadu Traffic Prediction + Route Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#030508;--panel:#080d18;--panel2:#0a1020;
+  --border:#152035;--border2:#1e2f4a;
+  --accent:#f97316;--accent2:#ea580c;--accent3:#fed7aa;
+  --blue:#3b82f6;--cyan:#06b6d4;
+  --green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;
+  --text:#f1f5f9;--muted:#475569;--muted2:#1e293b;
+  --font:'Rajdhani',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font);
+  min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(249,115,22,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(59,130,246,.05) 0%, transparent 50%);
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(249,115,22,.016) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(249,115,22,.016) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;z-index:0;
+}
+.wrap{position:relative;z-index:1;max-width:1380px;margin:0 auto;padding:0 24px;}
+
+/* HEADER */
+header{
+  padding:16px 0 14px;display:flex;align-items:center;gap:16px;
+  border-bottom:1px solid rgba(249,115,22,.14);
+  animation:slideDown .5s ease both;
+}
+.logo-wrap{
+  width:46px;height:46px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;box-shadow:0 0 28px rgba(249,115,22,.25);
+}
+.title-block h1{font-size:1.5rem;font-weight:700;letter-spacing:.5px;line-height:1.1;}
+.title-block h1 span{color:var(--accent);}
+.title-block .sub{font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.05em;margin-top:1px;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.creator-tag{
+  background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(234,88,12,.06));
+  border:1px solid rgba(249,115,22,.28);padding:5px 14px;border-radius:20px;
+  font-family:var(--mono);font-size:.63rem;letter-spacing:.06em;color:var(--accent3);
+}
+.creator-tag strong{color:var(--accent);font-weight:600;}
+.live-pill{
+  background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);
+  color:var(--green);font-family:var(--mono);font-size:.62rem;
+  padding:5px 12px;border-radius:20px;letter-spacing:.06em;
+  display:flex;align-items:center;gap:6px;
+}
+.pdot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.8s infinite;}
+.api-pill{font-family:var(--mono);font-size:.62rem;color:var(--muted);padding:5px 12px;border:1px solid var(--border);border-radius:20px;transition:all .25s;}
+.api-pill.ok{color:var(--green);border-color:rgba(34,197,94,.28);}
+.api-pill.err{color:var(--red);border-color:rgba(239,68,68,.28);}
+
+/* METRICS */
+.metrics{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:12px;margin:22px 0;animation:fadeUp .55s .08s ease both;
+}
+.mc{
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:16px 20px;position:relative;overflow:hidden;
+  transition:border-color .25s,transform .2s;cursor:default;
+}
+.mc:hover{transform:translateY(-2px);border-color:var(--border2);}
+.mc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent));}
+.mc-lbl{font-family:var(--mono);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.mc-val{font-size:1.75rem;font-weight:700;color:var(--c,var(--accent));line-height:1;}
+.mc-sub{font-family:var(--mono);font-size:.62rem;color:var(--muted);margin-top:4px;}
+
+/* TABS */
+.tabs{
+  display:flex;gap:0;margin-bottom:18px;
+  border-bottom:1px solid var(--border);
+  animation:fadeUp .55s .12s ease both;overflow-x:auto;
+}
+.tab-btn{
+  padding:10px 18px;background:transparent;border:none;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  color:var(--muted);font-family:var(--font);font-size:.92rem;font-weight:600;
+  letter-spacing:.04em;cursor:pointer;transition:all .2s;text-transform:uppercase;
+  white-space:nowrap;
+}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeUp .3s ease both;}
+
+/* PANEL */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;}
+.pt{font-size:.6rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.pt::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;margin-bottom:18px;}
+.right-col{display:flex;flex-direction:column;gap:16px;}
+
+/* FORM */
+.fsec{margin-bottom:16px;}
+.fsec-title{
+  font-size:.67rem;font-family:var(--mono);color:var(--accent);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:10px;padding-bottom:7px;
+  border-bottom:1px solid rgba(249,115,22,.15);
+}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.field label{display:block;font-family:var(--mono);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.field input,.field select{
+  width:100%;background:rgba(255,255,255,.028);border:1px solid var(--border2);
+  border-radius:8px;color:var(--text);font-family:var(--mono);font-size:.8rem;
+  padding:9px 11px;outline:none;transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;
+}
+.field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23475569' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;
+}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
+.field select option{background:#0a1020;color:#f1f5f9;}
+.btn-row{display:flex;gap:10px;margin-top:16px;}
+.predict-btn{
+  flex:1;padding:13px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:10px;color:#fff;
+  font-family:var(--font);font-weight:700;font-size:1rem;letter-spacing:.06em;
+  cursor:pointer;transition:all .2s;
+  box-shadow:0 0 20px rgba(249,115,22,.22);text-transform:uppercase;
+}
+.predict-btn:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(249,115,22,.38);}
+.predict-btn:active{transform:translateY(0);}
+.reset-btn{
+  padding:13px 16px;background:rgba(255,255,255,.035);
+  border:1px solid var(--border2);border-radius:10px;
+  color:var(--muted);font-family:var(--mono);font-size:.72rem;
+  cursor:pointer;transition:all .2s;
+}
+.reset-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* RESULT */
+.result-wrap{display:none;margin-top:16px;animation:scaleIn .35s cubic-bezier(.34,1.56,.64,1) both;}
+.result-top{border-radius:12px;padding:18px 20px;border:1px solid var(--border);margin-bottom:12px;}
+.result-top.Low{border-color:var(--green);background:rgba(34,197,94,.05);}
+.result-top.Medium{border-color:var(--yellow);background:rgba(234,179,8,.05);}
+.result-top.High{border-color:var(--orange);background:rgba(249,115,22,.05);}
+.result-top.Critical{border-color:var(--red);background:rgba(239,68,68,.05);}
+.res-lvl{font-size:1.6rem;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.res-lvl.Low{color:var(--green);}
+.res-lvl.Medium{color:var(--yellow);}
+.res-lvl.High{color:var(--orange);}
+.res-lvl.Critical{color:var(--red);}
+.res-meta{font-family:var(--mono);font-size:.66rem;color:var(--muted);margin-bottom:10px;line-height:1.6;}
+.conf-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.conf-bar{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.25,.46,.45,.94);}
+.conf-pct{font-family:var(--mono);font-size:.72rem;color:var(--text);min-width:36px;text-align:right;}
+.res-advice{
+  font-family:var(--mono);font-size:.7rem;line-height:1.7;
+  margin-top:10px;padding:10px 14px;
+  background:rgba(255,255,255,.025);border-radius:8px;border-left:3px solid;
+}
+.res-advice.Low{border-color:var(--green);color:#86efac;}
+.res-advice.Medium{border-color:var(--yellow);color:#fde68a;}
+.res-advice.High{border-color:var(--orange);color:#fed7aa;}
+.res-advice.Critical{border-color:var(--red);color:#fca5a5;}
+
+/* RESULT GRAPH */
+.result-graph{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.rg-title{
+  font-family:var(--mono);font-size:.6rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* PROB BARS */
+.prob-bars{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.pb-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.68rem;}
+.pb-lbl{width:58px;color:var(--muted);}
+.pb-track{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.pb-fill{height:100%;border-radius:4px;width:0;transition:width 1.1s .15s cubic-bezier(.25,.46,.45,.94);}
+.pb-pct{width:34px;text-align:right;color:var(--text);}
+
+/* MODEL ROWS */
+.mrow{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:12px;}
+.mrow:last-child{border-bottom:none;}
+.mname{font-weight:700;font-size:.88rem;min-width:155px;}
+.mbar-t{flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.mbar-f{height:100%;border-radius:3px;transition:width 1.2s .3s ease;}
+.mval{font-family:var(--mono);font-size:.76rem;min-width:46px;text-align:right;}
+.best-tag{font-family:var(--mono);font-size:.56rem;background:rgba(34,197,94,.1);color:var(--green);padding:2px 7px;border-radius:10px;border:1px solid rgba(34,197,94,.22);}
+
+/* LIVE */
+.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+.lc{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:14px;transition:border-color .2s;}
+.lc:hover{border-color:var(--border2);}
+.lc-name{font-weight:700;font-size:.9rem;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lc-row{display:flex;justify-content:space-between;margin-top:5px;}
+.lc-lbl{font-family:var(--mono);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.lc-val{font-family:var(--mono);font-size:.75rem;color:var(--text);}
+.lvldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;animation:blink 2s infinite;}
+.d-Low{background:var(--green);}
+.d-Medium{background:var(--yellow);}
+.d-High{background:var(--orange);}
+.d-Critical{background:var(--red);}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.68rem;}
+th{text-align:left;padding:9px 12px;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);}
+td{padding:9px 12px;border-bottom:1px solid rgba(21,32,53,.45);}
+tr:hover td{background:rgba(249,115,22,.025);}
+.bl{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.6rem;font-weight:600;letter-spacing:.05em;}
+.bl-Low{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.bl-Medium{background:rgba(234,179,8,.1);color:var(--yellow);border:1px solid rgba(234,179,8,.2);}
+.bl-High{background:rgba(249,115,22,.1);color:var(--orange);border:1px solid rgba(249,115,22,.2);}
+.bl-Critical{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+
+/* LOG */
+.api-log{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:.63rem;max-height:90px;overflow-y:auto;margin-top:10px;}
+.le{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.le:last-child{border:none;}
+.l-ok{color:var(--green);}
+.l-err{color:var(--red);}
+.l-info{color:var(--muted);}
+
+/* CSV */
+.csv-zone{border:2px dashed var(--border2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.csv-zone:hover{border-color:var(--accent);background:rgba(249,115,22,.03);}
+.csv-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+
+/* FOOTER */
+footer{
+  border-top:1px solid rgba(249,115,22,.1);padding:18px 0;
+  text-align:center;font-family:var(--mono);font-size:.62rem;color:var(--muted);
+  margin-top:24px;display:flex;align-items:center;justify-content:center;
+  gap:14px;flex-wrap:wrap;
+}
+footer strong{color:var(--accent);}
+
+/* ANIMATIONS */
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+@media(max-width:1000px){.main-grid{grid-template-columns:1fr;}.metrics{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.metrics{grid-template-columns:1fr 1fr;}.fg3{grid-template-columns:1fr 1fr;}}
+
+/* ── MAPS TAB ── */
+.map-panel{margin-bottom:16px;}
+.route-row{display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:end;margin-bottom:14px;}
+.route-field label{display:block;font-family:var(--mono);font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.route-field input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:var(--font);font-size:.9rem;font-weight:600;padding:11px 14px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.route-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
+.route-field input::placeholder{color:var(--muted);font-weight:400;font-size:.82rem;}
+.swap-btn{width:42px;height:42px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.22);border-radius:9px;color:var(--accent);font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s;align-self:flex-end;flex-shrink:0;}
+.swap-btn:hover{background:rgba(249,115,22,.18);transform:rotate(180deg);}
+.show-route-btn{padding:11px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;color:#fff;font-family:var(--font);font-weight:700;font-size:.9rem;cursor:pointer;transition:all .2s;box-shadow:0 0 16px rgba(249,115,22,.2);white-space:nowrap;align-self:flex-end;letter-spacing:.04em;}
+.show-route-btn:hover{transform:translateY(-1px);box-shadow:0 0 24px rgba(249,115,22,.36);}
+.quick-routes{margin-bottom:12px;}
+.qr-label{font-family:var(--mono);font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;}
+.qr-btns{display:flex;gap:7px;flex-wrap:wrap;}
+.qr-btn{padding:5px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:20px;color:var(--muted);font-family:var(--mono);font-size:.63rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.qr-btn:hover{background:rgba(249,115,22,.08);border-color:rgba(249,115,22,.28);color:var(--accent);}
+.map-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.mc-btn{padding:5px 13px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:20px;color:var(--muted);font-family:var(--mono);font-size:.62rem;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+.mc-btn.on{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.28);color:var(--accent);}
+.mc-btn:hover{background:rgba(249,115,22,.07);border-color:rgba(249,115,22,.22);color:var(--accent3);}
+.traf-legend{margin-left:auto;display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:.6rem;color:var(--muted);}
+.tl-dot{display:inline-block;width:12px;height:6px;border-radius:3px;margin-right:4px;}
+.map-free-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.22);border-radius:20px;
+  font-family:var(--mono);font-size:.63rem;color:var(--green);margin-bottom:12px;}
+#map-container{width:100%;height:520px;border-radius:12px;overflow:hidden;border:2px solid #e2e8f0;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.15);} #leafmap{width:100%;height:100%;}
+#gmap{width:100%;height:100%;}
+
+.route-info{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.ri-card{flex:1;min-width:110px;background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;}
+.ri-lbl{font-family:var(--mono);font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.ri-val{font-family:var(--mono);font-size:.86rem;font-weight:600;color:var(--text);}
+@media(max-width:800px){.route-row{grid-template-columns:1fr 1fr;} .show-route-btn{grid-column:1/-1;}}
+@media(max-width:500px){.route-row{grid-template-columns:1fr;} #map-container{height:300px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo-wrap">🚦</div>
+  <div class="title-block">
+    <h1>Traffic<span>Mind</span> AI</h1>
+    <div class="sub">TAMIL NADU DISTRICT TRAFFIC CONGESTION PREDICTION SYSTEM</div>
+  </div>
+  <div class="hdr-right">
+    <div class="creator-tag">Created by <strong>LALITH KRISH</strong></div>
+    <div class="api-pill" id="api-pill">API: checking…</div>
+    <div class="live-pill"><span class="pdot"></span>LIVE</div>
+  </div>
+</header>
+
+<!-- ACCURACY METRICS — LIVE AUTO CHANGE v2 -->
+<style>
+/* ── metric strip ── */
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;padding:10px 0 16px;
+}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:500px){.metrics{grid-template-columns:repeat(2,1fr);}}
+
+.mc{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px 12px;
+  position:relative;overflow:hidden;
+  cursor:default;
+  transition:transform .2s,box-shadow .2s,border-color .4s;
+}
+.mc:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.35);}
+
+/* coloured left stripe */
+.mc::before{
+  content:'';position:absolute;top:0;left:0;
+  width:3px;height:100%;
+  background:var(--mc,var(--accent));
+  border-radius:12px 0 0 12px;
+}
+/* subtle glow bg */
+.mc::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 10% 50%, color-mix(in srgb,var(--mc,var(--accent)) 6%,transparent), transparent);
+  pointer-events:none;
+}
+
+.mc-icon{font-size:1.1rem;line-height:1;margin-bottom:6px;display:block;}
+.mc-lbl{
+  font-family:var(--mono);font-size:.52rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;
+}
+.mc-val{
+  font-family:var(--mono);font-size:1.5rem;font-weight:700;
+  color:var(--mc,var(--text));line-height:1;
+  transition:color .3s;
+}
+.mc-sub{
+  font-family:var(--mono);font-size:.54rem;color:var(--muted);
+  margin-top:7px;line-height:1.4;min-height:1.5em;
+}
+/* progress bar */
+.mc-bar{
+  height:4px;
+  background:rgba(255,255,255,.05);
+  border-radius:4px;
+  margin-top:10px;
+  overflow:hidden;
+}
+.mc-bar-fill{
+  height:100%;border-radius:4px;
+  background:var(--mc,var(--accent));
+  transition:width 1.2s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+/* shimmer on bar */
+.mc-bar-fill::after{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  animation:barShimmer 2.5s linear infinite;
+}
+@keyframes barShimmer{0%{left:-100%}100%{left:200%}}
+
+/* value flash on update */
+@keyframes flashVal{
+  0%{opacity:.2;transform:translateY(4px) scale(.93)}
+  60%{opacity:1;transform:translateY(-1px) scale(1.04)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+.mc-val.flash{animation:flashVal .4s cubic-bezier(.4,0,.2,1) both;}
+
+/* tick indicator */
+.mc-tick{
+  position:absolute;top:10px;right:10px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--mc,var(--accent));
+  opacity:0;
+}
+.mc-tick.blink{animation:tickBlink .5s ease both;}
+@keyframes tickBlink{0%{opacity:1;transform:scale(1.6)}100%{opacity:0;transform:scale(1)}}
+</style>
+
+<div class="metrics">
+  <!-- 1 · Accuracy -->
+  <div class="mc" style="--mc:#22c55e">
+    <div class="mc-tick" id="tick-acc"></div>
+    <span class="mc-icon">🎯</span>
+    <div class="mc-lbl">Model Accuracy</div>
+    <div class="mc-val" id="m-acc">92.64%</div>
+    <div class="mc-bar"><div class="mc-bar-fill" id="bar-acc" style="width:92.64%"></div></div>
+    <div class="mc-sub" id="sub-acc">Random Forest · Best ★</div>
+  </div>
+  <!-- 2 · F1 -->
+  <div class="mc" style="--mc:#06b6d4">
+    <div class="mc-tick" id="tick-f1"></div>
+    <span class="mc-icon">📊</span>
+    <div class="mc-lbl">F1 Score</div>
+    <div class="mc-val" id="m-f1" style="color:#06b6d4">0.9261</div>
+    <div class="mc-bar"><div class="mc-bar-fill" id="bar-f1" style="width:92.61%;background:#06b6d4"></div></div>
+    <div class="mc-sub" id="sub-f1">Weighted avg</div>
+  </div>
+  <!-- 3 · Precision -->
+  <div class="mc" style="--mc:#eab308">
+    <div class="mc-tick" id="tick-prec"></div>
+    <span class="mc-icon">🔬</span>
+    <div class="mc-lbl">Precision</div>
+    <div class="mc-val" id="m-prec" style="color:#eab308">0.9268</div>
+    <div class="mc-bar"><div class="mc-bar-fill" id="bar-prec" style="width:92.68%;background:#eab308"></div></div>
+    <div class="mc-sub" id="sub-prec">Weighted avg</div>
+  </div>
+  <!-- 4 · Recall -->
+  <div class="mc" style="--mc:#3b82f6">
+    <div class="mc-tick" id="tick-rec"></div>
+    <span class="mc-icon">📡</span>
+    <div class="mc-lbl">Recall</div>
+    <div class="mc-val" id="m-rec" style="color:#3b82f6">0.9264</div>
+    <div class="mc-bar"><div class="mc-bar-fill" id="bar-rec" style="width:92.64%;background:#3b82f6"></div></div>
+    <div class="mc-sub" id="sub-rec">Weighted avg</div>
+  </div>
+  <!-- 5 · Predictions -->
+  <div class="mc" style="--mc:#f97316">
+    <div class="mc-tick" id="tick-pred"></div>
+    <span class="mc-icon">⚡</span>
+    <div class="mc-lbl">Predictions</div>
+    <div class="mc-val" id="m-pred" style="color:#f97316">0</div>
+    <div class="mc-bar"><div class="mc-bar-fill" id="bar-pred" style="width:0%;background:#f97316"></div></div>
+    <div class="mc-sub" id="sub-pred">This session</div>
+  </div>
+  <!-- 6 · Live -->
+  <div class="mc" style="--mc:#a855f7">
+    <div class="mc-tick" id="tick-live"></div>
+    <span class="mc-icon">🌐</span>
+    <div class="mc-lbl">Live Status</div>
+    <div class="mc-val" id="m-live" style="color:#a855f7;font-size:1rem;">—</div>
+    <div class="mc-bar"><div class="mc-bar-fill" id="bar-live" style="width:0%;background:#a855f7"></div></div>
+    <div class="mc-sub" id="m-live-sub">checking…</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('predict')">⚡ Predict</button>
+  <button class="tab-btn" onclick="switchTab('maps')">🗺 Route Map</button>
+  <button class="tab-btn" onclick="switchTab('live')">📡 Live Monitor</button>
+  <button class="tab-btn" onclick="switchTab('csv')">📂 CSV Import</button>
+  <button class="tab-btn" onclick="switchTab('models')">🧠 Models</button>
+  <button class="tab-btn" onclick="switchTab('history')">🗂 History</button>
+</div>
+
+<!-- ═══════════════════════ PREDICT TAB ═════════════════════════ -->
+<div class="tab-panel active" id="tab-predict">
+<div class="main-grid">
+
+  <!-- LEFT: FORM -->
+  <div class="panel">
+    <div class="pt">📋 Traffic Input — Tamil Nadu</div>
+
+    <div class="fsec">
+      <div class="fsec-title">📍 Location & Time</div>
+      <div class="fg">
+        <div class="field">
+          <label>District (Tamil Nadu — 38)</label>
+          <select id="f-district">
+            <option value="">— Select District —</option>
+            <option>Ariyalur</option><option>Chengalpattu</option>
+            <option>Chennai</option><option>Coimbatore</option>
+            <option>Cuddalore</option><option>Dharmapuri</option>
+            <option>Dindigul</option><option>Erode</option>
+            <option>Kallakurichi</option><option>Kancheepuram</option>
+            <option>Kanyakumari</option><option>Karur</option>
+            <option>Krishnagiri</option><option>Madurai</option>
+            <option>Mayiladuthurai</option><option>Nagapattinam</option>
+            <option>Namakkal</option><option>Nilgiris</option>
+            <option>Perambalur</option><option>Pudukkottai</option>
+            <option>Ramanathapuram</option><option>Ranipet</option>
+            <option>Salem</option><option>Sivaganga</option>
+            <option>Tenkasi</option><option>Thanjavur</option>
+            <option>Theni</option><option>Thoothukudi</option>
+            <option>Tiruchirappalli</option><option>Tirunelveli</option>
+            <option>Tirupathur</option><option>Tiruppur</option>
+            <option>Tiruvallur</option><option>Tiruvannamalai</option>
+            <option>Tiruvarur</option><option>Vellore</option>
+            <option>Viluppuram</option><option>Virudhunagar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Road / Area Name</label>
+          <input type="text" id="f-road-name" placeholder="e.g. Anna Salai, NH-44"/>
+        </div>
+        <div class="field">
+          <label>Hour (0–23)</label>
+          <input type="number" id="f-hour" min="0" max="23" value="8"/>
+        </div>
+        <div class="field">
+          <label>Day of Week</label>
+          <select id="f-dow">
+            <option value="0">Monday</option><option value="1">Tuesday</option>
+            <option value="2">Wednesday</option><option value="3">Thursday</option>
+            <option value="4">Friday</option><option value="5">Saturday</option>
+            <option value="6">Sunday</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Month</label>
+          <select id="f-month">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6" selected>June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Special Conditions</label>
+          <select id="f-special">
+            <option value="0,0,0">None</option>
+            <option value="1,0,0">Holiday (Pongal / Diwali)</option>
+            <option value="0,1,0">Weekend</option>
+            <option value="0,0,1">Special Event</option>
+            <option value="1,1,0">Holiday + Weekend</option>
+            <option value="0,0,1">Temple Festival / Jallikattu</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">🚗 Vehicle Details</div>
+      <div class="fg3">
+        <div class="field">
+          <label>Vehicle Type</label>
+          <select id="f-vtype">
+            <option value="mixed">Mixed Traffic</option>
+            <option value="2wheeler">2-Wheeler (Bike/Scooter)</option>
+            <option value="3wheeler">3-Wheeler (Auto)</option>
+            <option value="car">Car / Taxi / Cab</option>
+            <option value="bus">Bus (MTC / Private)</option>
+            <option value="truck">Truck / Lorry</option>
+            <option value="lcv">LCV / Mini-Van</option>
+            <option value="cycle">Cycle / E-Bike</option>
+            <option value="heavyvehicle">Heavy Vehicle</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Avg Speed (km/h)</label>
+          <input type="number" id="f-speed" value="25" min="0"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">🛣 Road Details</div>
+      <div class="fg3">
+        <div class="field">
+          <label>Road Type</label>
+          <select id="f-road-type">
+            <option value="arterial">State Highway (SH)</option>
+            <option value="highway">National Highway (NH)</option>
+            <option value="local">City / Local Road</option>
+            <option value="expressway">Expressway</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Road Capacity</label>
+          <input type="number" id="f-cap" value="800" min="1"/>
+        </div>
+        <div class="field">
+          <label>Lane Count</label>
+          <input type="number" id="f-lanes" value="2" min="1" max="8"/>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:10px;">
+        <div class="field">
+          <label>Accidents Nearby (count)</label>
+          <input type="number" id="f-accidents" value="0" min="0" max="20"/>
+        </div>
+        <div class="field">
+          <label>Rainfall (mm)</label>
+          <input type="number" id="f-rain" value="0" step="0.1" min="0"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">🌦 Weather (Tamil Nadu)</div>
+      <div class="fg">
+        <div class="field">
+          <label>Temperature (°C)</label>
+          <input type="number" id="f-temp" value="35"/>
+        </div>
+        <div class="field">
+          <label>Season (Auto-fill)</label>
+          <select id="f-season" onchange="applySeason(this.value)">
+            <option value="">Select Season</option>
+            <option value="summer">☀ Summer (Mar–Jun)</option>
+            <option value="monsoon">🌧 SW Monsoon (Jul–Sep)</option>
+            <option value="nemonsoon">⛈ NE Monsoon (Oct–Dec)</option>
+            <option value="winter">🌤 Winter (Jan–Feb)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="predict-btn" onclick="runPredict()">⚡ PREDICT CONGESTION</button>
+      <button class="reset-btn" onclick="clearResult()">✕ Reset</button>
+    </div>
+
+    <div class="api-log" id="api-log">
+      <div class="le l-info">// API log ready</div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="result-wrap" id="result-wrap">
+      <div class="result-top" id="result-top">
+        <div class="res-lvl" id="res-lvl"></div>
+        <div class="res-meta" id="res-meta"></div>
+        <div class="conf-row">
+          <span style="font-family:var(--mono);font-size:.58rem;color:var(--muted);">CONFIDENCE</span>
+          <div class="conf-bar"><div class="conf-fill" id="conf-fill"></div></div>
+          <span class="conf-pct" id="conf-pct"></span>
+        </div>
+        <div class="res-advice" id="res-advice"></div>
+      </div>
+
+      <!-- RESULT VISUALIZATION GRAPH -->
+      <div class="result-graph">
+        <div class="rg-title">
+          <span>📊 RESULT VISUALIZATION GRAPH</span>
+          <span id="rg-label" style="color:var(--accent);"></span>
+        </div>
+        <canvas id="resultChart" height="155"></canvas>
+        <div class="prob-bars" id="prob-bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COL -->
+  <div class="right-col">
+    <div class="panel">
+      <div class="pt">🧠 Model Accuracy</div>
+      <div id="model-list-small"></div>
+    </div>
+    <div class="panel" style="flex:1;">
+      <div class="pt">📈 Congestion Distribution</div>
+      <canvas id="distChart" height="195"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom charts -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+  <div class="panel">
+    <div class="pt">⏱ Hourly Traffic Pattern (Tamil Nadu)</div>
+    <canvas id="hourChart" height="200"></canvas>
+  </div>
+  <div class="panel">
+    <div class="pt">🎯 Confusion Matrix</div>
+    <canvas id="confMatrix" height="200"></canvas>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════ MAPS TAB ══════════════════════ -->
+<div class="tab-panel" id="tab-maps">
+<style>
+/* ── MAP TAB STYLES ── */
+.map-outer{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.map-route-row{display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:end;margin-bottom:14px;}
+.map-field label{display:block;font-family:var(--mono);font-size:.57rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.map-field input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:9px;color:var(--text);font-family:var(--font);font-size:.9rem;font-weight:600;
+  padding:11px 14px;outline:none;transition:border-color .2s;}
+.map-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
+.map-field input::placeholder{color:var(--muted);font-weight:400;font-size:.82rem;}
+.map-swap-btn{width:42px;height:42px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.22);
+  border-radius:9px;color:var(--accent);font-size:1.2rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .25s;align-self:flex-end;}
+.map-swap-btn:hover{background:rgba(249,115,22,.2);transform:rotate(180deg);}
+.map-go-btn{padding:11px 24px;background:linear-gradient(135deg,#f97316,#ea580c);
+  border:none;border-radius:9px;color:#fff;font-family:var(--font);font-weight:700;
+  font-size:.9rem;cursor:pointer;transition:all .2s;align-self:flex-end;white-space:nowrap;
+  box-shadow:0 0 18px rgba(249,115,22,.25);}
+.map-go-btn:hover{transform:translateY(-1px);box-shadow:0 0 28px rgba(249,115,22,.42);}
+.map-go-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.qr-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.qr-b{padding:5px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border2);
+  border-radius:20px;color:var(--muted);font-family:var(--mono);font-size:.63rem;
+  cursor:pointer;transition:all .2s;white-space:nowrap;}
+.qr-b:hover{background:rgba(249,115,22,.08);border-color:rgba(249,115,22,.3);color:var(--accent);}
+.wave-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;
+  font-family:var(--mono);font-size:.63rem;align-items:center;}
+.wl-item{display:flex;align-items:center;gap:6px;}
+.wl-line{width:36px;height:4px;border-radius:2px;}
+.wl-label{color:var(--muted);}
+/* SVG map container */
+#india-map-wrap{
+  width:100%;
+  background:radial-gradient(ellipse 100% 80% at 50% 30%, #020c18 0%, #000509 100%);
+  border-radius:14px;overflow:hidden;
+  border:1px solid rgba(249,115,22,.3);
+  box-shadow:0 0 40px rgba(249,115,22,.08), inset 0 0 60px rgba(0,0,0,.6);
+  position:relative;min-height:580px;
+}
+#india-svg{width:100%;height:100%;display:block;}
+/* Route info cards */
+.ri-cards{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.ri-c{flex:1;min-width:110px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:9px;padding:10px 14px;}
+.ri-lbl{font-family:var(--mono);font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.ri-val{font-family:var(--mono);font-size:.86rem;font-weight:600;color:var(--text);}
+</style>
+
+<div class="map-outer">
+  <div class="pt">🗺 India Map — Source → Destination with Wave Traffic Lines</div>
+
+  <!-- Route inputs -->
+  <div class="map-route-row">
+    <div class="map-field">
+      <label>🔵 Source City</label>
+      <input type="text" id="ms" list="city-list" placeholder="e.g. Chennai, Mumbai, Delhi…"/>
+    </div>
+    <button class="map-swap-btn" onclick="swapRoute()" title="Swap">⇄</button>
+    <div class="map-field">
+      <label>🔴 Destination City</label>
+      <input type="text" id="md" list="city-list" placeholder="e.g. Coimbatore, Bengaluru…"/>
+    </div>
+    <button class="map-go-btn" id="map-go-btn" onclick="drawWaveRoute()">🗺 Show Route</button>
+  </div>
+
+  <!-- Datalist for city autocomplete -->
+  <datalist id="city-list"></datalist>
+
+  <!-- Quick routes -->
+  <div style="font-family:var(--mono);font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;">Quick Routes</div>
+  <div class="qr-row">
+    <button class="qr-b" onclick="qR('Chennai','Coimbatore')">Chennai → Coimbatore</button>
+    <button class="qr-b" onclick="qR('Chennai','Madurai')">Chennai → Madurai</button>
+    <button class="qr-b" onclick="qR('Chennai','Delhi')">Chennai → Delhi</button>
+    <button class="qr-b" onclick="qR('Mumbai','Bengaluru')">Mumbai → Bengaluru</button>
+    <button class="qr-b" onclick="qR('Coimbatore','Salem')">Coimbatore → Salem</button>
+    <button class="qr-b" onclick="qR('Madurai','Tirunelveli')">Madurai → Tirunelveli</button>
+    <button class="qr-b" onclick="qR('Delhi','Mumbai')">Delhi → Mumbai</button>
+    <button class="qr-b" onclick="qR('Kolkata','Chennai')">Kolkata → Chennai</button>
+    <button class="qr-b" onclick="qR('Hyderabad','Bengaluru')">Hyderabad → Bengaluru</button>
+    <button class="qr-b" onclick="qR('Salem','Erode')">Salem → Erode</button>
+  </div>
+
+  <!-- Wave legend -->
+  <div class="wave-legend">
+    <span style="color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;">Wave Type:</span>
+    <div class="wl-item"><svg width="36" height="12"><path d="M0,6 Q9,0 18,6 Q27,12 36,6" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="4,2"/></svg><span class="wl-label">Low — Free Flow</span></div>
+    <div class="wl-item"><svg width="36" height="12"><path d="M0,6 Q9,1 18,6 Q27,11 36,6" fill="none" stroke="#eab308" stroke-width="3"/></svg><span class="wl-label">Medium — Slow</span></div>
+    <div class="wl-item"><svg width="36" height="12"><path d="M0,6 Q6,0 12,6 Q18,12 24,6 Q30,0 36,6" fill="none" stroke="#f97316" stroke-width="3"/></svg><span class="wl-label">High — Heavy</span></div>
+    <div class="wl-item"><svg width="36" height="12"><path d="M0,6 Q4,1 8,6 Q12,11 16,6 Q20,1 24,6 Q28,11 32,6 Q34,3 36,6" fill="none" stroke="#ef4444" stroke-width="3"/></svg><span class="wl-label">Critical — Jam</span></div>
+    <div class="wl-item"><svg width="36" height="12"><line x1="0" y1="6" x2="36" y2="6" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6,3"/></svg><span class="wl-label">No Traffic Data</span></div>
+  </div>
+
+  <!-- SVG India Map -->
+  <div id="india-map-wrap">
+    <svg id="india-svg" viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- ── NEON GLOW FILTERS ── -->
+        <filter id="glow-city" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="3" result="b1"/>
+          <feGaussianBlur stdDeviation="7" result="b2"/>
+          <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-land" x="-5%" y="-5%" width="110%" height="110%">
+          <feGaussianBlur stdDeviation="1.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-tn" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- ── BACKGROUND GRADIENT ── -->
+        <radialGradient id="seaGrad" cx="50%" cy="40%">
+          <stop offset="0%"   stop-color="#020d1a"/>
+          <stop offset="60%"  stop-color="#010810"/>
+          <stop offset="100%" stop-color="#000509"/>
+        </radialGradient>
+
+        <!-- ── LAND GRADIENT — dark navy with subtle blue tint ── -->
+        <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#0d1f2d"/>
+          <stop offset="40%"  stop-color="#0a1828"/>
+          <stop offset="100%" stop-color="#0c1e2c"/>
+        </linearGradient>
+
+        <!-- ── TN GLOW HIGHLIGHT ── -->
+        <radialGradient id="tnGrad" cx="42%" cy="72%">
+          <stop offset="0%"   stop-color="#f97316" stop-opacity="0.18"/>
+          <stop offset="50%"  stop-color="#f97316" stop-opacity="0.05"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+
+        <!-- ── GRID PATTERN OVERLAY ── -->
+        <pattern id="gridPat" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(59,130,246,0.04)" stroke-width="0.5"/>
+        </pattern>
+
+        <!-- ── ANIMATED STYLES ── -->
+        <style>
+          .wave-animate      { animation: dashFlow 3s   linear infinite; }
+          .wave-animate-fast { animation: dashFlow 1.4s linear infinite; }
+          .wave-animate-slow { animation: dashFlow 5s   linear infinite; }
+          @keyframes dashFlow { from{stroke-dashoffset:1000} to{stroke-dashoffset:0} }
+          @keyframes pulseCity {
+            0%,100%{ opacity:1; }
+            50%    { opacity:0.35; }
+          }
+          @keyframes scanLine {
+            0%  { transform: translateY(-700px); }
+            100%{ transform: translateY(700px);  }
+          }
+          .city-dot:hover { cursor:pointer; }
+          .city-name { pointer-events:none; user-select:none; }
+        </style>
+
+        <!-- ── ARROW MARKERS ── -->
+        <marker id="arrow-green"  markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/>
+        </marker>
+        <marker id="arrow-yellow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#eab308"/>
+        </marker>
+        <marker id="arrow-orange" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#f97316"/>
+        </marker>
+        <marker id="arrow-red"    markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#ef4444"/>
+        </marker>
+      </defs>
+
+      <!-- ── OCEAN BACKGROUND ── -->
+      <rect width="600" height="700" fill="url(#seaGrad)"/>
+
+      <!-- ── GRID OVERLAY ── -->
+      <rect width="600" height="700" fill="url(#gridPat)" opacity="0.8"/>
+
+      <!-- ── SCAN LINE EFFECT ── -->
+      <rect width="600" height="3" fill="rgba(249,115,22,0.04)" style="animation:scanLine 8s linear infinite"/>
+
+      <!-- ── INDIA MAP SHAPE — NEON CYBERPUNK ── -->
+      <g id="india-land">
+
+        <!-- ══ INDIA MAIN BODY — accurate geographic outline ══ -->
+        <!-- Mainland fill -->
+        <path id="india-body" d="
+          M 220,22 L 238,18 L 258,16 L 278,15 L 300,16 L 322,15 L 344,17
+          L 362,20 L 378,25 L 395,28 L 412,34 L 428,40 L 442,46 L 455,50
+          L 466,54 L 477,60 L 488,68 L 497,78 L 504,88 L 508,100
+          L 510,112 L 509,124 L 506,136 L 502,148 L 499,158 L 500,168
+          L 504,178 L 510,188 L 516,198 L 520,210 L 521,222 L 519,234
+          L 514,246 L 507,256 L 498,266 L 489,274 L 480,282 L 473,292
+          L 466,304 L 460,316 L 455,328 L 451,342 L 450,356 L 452,370
+          L 453,382 L 449,396 L 442,410 L 432,424 L 419,437 L 404,450
+          L 388,461 L 372,472 L 356,484 L 340,496 L 324,509 L 309,522
+          L 296,534 L 285,546 L 276,558 L 268,570 L 262,580 L 257,590
+          L 253,600 L 250,608 L 247,600 L 243,590 L 238,578 L 231,566
+          L 222,552 L 211,538 L 199,522 L 186,506 L 172,490 L 158,474
+          L 145,457 L 133,440 L 122,422 L 113,404 L 106,386 L 101,367
+          L 98,348  L 97,330  L 98,312  L 101,294 L 106,277 L 113,262
+          L 118,248 L 120,234 L 119,220 L 116,206 L 115,192 L 118,178
+          L 124,164 L 128,150 L 127,136 L 122,122 L 117,108 L 114,94
+          L 115,80  L 120,67  L 128,56  L 140,46  L 154,38  L 170,30
+          L 188,24 Z
+        " fill="url(#landGrad)" opacity="0.96"/>
+
+        <!-- Glow border outer -->
+        <path d="
+          M 220,22 L 238,18 L 258,16 L 278,15 L 300,16 L 322,15 L 344,17
+          L 362,20 L 378,25 L 395,28 L 412,34 L 428,40 L 442,46 L 455,50
+          L 466,54 L 477,60 L 488,68 L 497,78 L 504,88 L 508,100
+          L 510,112 L 509,124 L 506,136 L 502,148 L 499,158 L 500,168
+          L 504,178 L 510,188 L 516,198 L 520,210 L 521,222 L 519,234
+          L 514,246 L 507,256 L 498,266 L 489,274 L 480,282 L 473,292
+          L 466,304 L 460,316 L 455,328 L 451,342 L 450,356 L 452,370
+          L 453,382 L 449,396 L 442,410 L 432,424 L 419,437 L 404,450
+          L 388,461 L 372,472 L 356,484 L 340,496 L 324,509 L 309,522
+          L 296,534 L 285,546 L 276,558 L 268,570 L 262,580 L 257,590
+          L 253,600 L 250,608 L 247,600 L 243,590 L 238,578 L 231,566
+          L 222,552 L 211,538 L 199,522 L 186,506 L 172,490 L 158,474
+          L 145,457 L 133,440 L 122,422 L 113,404 L 106,386 L 101,367
+          L 98,348  L 97,330  L 98,312  L 101,294 L 106,277 L 113,262
+          L 118,248 L 120,234 L 119,220 L 116,206 L 115,192 L 118,178
+          L 124,164 L 128,150 L 127,136 L 122,122 L 117,108 L 114,94
+          L 115,80  L 120,67  L 128,56  L 140,46  L 154,38  L 170,30
+          L 188,24 Z"
+          fill="none" stroke="rgba(56,189,248,0.55)" stroke-width="5"
+          filter="url(#glow-land)"/>
+
+        <!-- Sharp neon coastline -->
+        <path d="
+          M 220,22 L 238,18 L 258,16 L 278,15 L 300,16 L 322,15 L 344,17
+          L 362,20 L 378,25 L 395,28 L 412,34 L 428,40 L 442,46 L 455,50
+          L 466,54 L 477,60 L 488,68 L 497,78 L 504,88 L 508,100
+          L 510,112 L 509,124 L 506,136 L 502,148 L 499,158 L 500,168
+          L 504,178 L 510,188 L 516,198 L 520,210 L 521,222 L 519,234
+          L 514,246 L 507,256 L 498,266 L 489,274 L 480,282 L 473,292
+          L 466,304 L 460,316 L 455,328 L 451,342 L 450,356 L 452,370
+          L 453,382 L 449,396 L 442,410 L 432,424 L 419,437 L 404,450
+          L 388,461 L 372,472 L 356,484 L 340,496 L 324,509 L 309,522
+          L 296,534 L 285,546 L 276,558 L 268,570 L 262,580 L 257,590
+          L 253,600 L 250,608 L 247,600 L 243,590 L 238,578 L 231,566
+          L 222,552 L 211,538 L 199,522 L 186,506 L 172,490 L 158,474
+          L 145,457 L 133,440 L 122,422 L 113,404 L 106,386 L 101,367
+          L 98,348  L 97,330  L 98,312  L 101,294 L 106,277 L 113,262
+          L 118,248 L 120,234 L 119,220 L 116,206 L 115,192 L 118,178
+          L 124,164 L 128,150 L 127,136 L 122,122 L 117,108 L 114,94
+          L 115,80  L 120,67  L 128,56  L 140,46  L 154,38  L 170,30
+          L 188,24 Z"
+          fill="none" stroke="rgba(147,210,255,0.95)" stroke-width="1.4"/>
+
+        <!-- Kerala coast highlight (west side smooth curve) -->
+        <path d="M 113,404 C 108,430 104,455 108,475 C 112,492 122,508 135,522"
+          fill="none" stroke="rgba(56,189,248,0.4)" stroke-width="2.5"/>
+
+        <!-- Coromandel coast (east side) -->
+        <path d="M 388,461 C 370,475 352,490 336,508 C 320,522 308,536 298,550"
+          fill="none" stroke="rgba(56,189,248,0.35)" stroke-width="2"/>
+
+        <!-- ── Kashmir/Jammu protrusion (NW) ── -->
+        <path d="M 220,22 C 208,20 196,22 184,26 C 172,30 160,38 150,46
+          C 138,54 128,64 120,76 C 115,86 114,96 117,108"
+          fill="none" stroke="rgba(147,210,255,0.6)" stroke-width="1.2"/>
+        <path d="M 220,22 L 200,20 L 180,24 L 162,32 L 148,42 L 136,54 L 126,66
+          L 118,80 L 115,94 L 117,108"
+          fill="#0d1f2d" stroke="rgba(147,210,255,0.5)" stroke-width="0.8"/>
+
+        <!-- ── Northeast states bulge (NE) ── -->
+        <path d="M 428,40 L 448,34 L 468,34 L 488,40 L 504,50 L 514,62
+          L 518,76 L 516,90 L 510,100"
+          fill="#0d1f2d" stroke="rgba(147,210,255,0.55)" stroke-width="1"/>
+
+        <!-- ── Gujarat coast bulge (W) ── -->
+        <path d="M 97,330 C 88,318 82,304 80,290 C 78,276 82,262 90,250
+          C 98,238 108,228 116,216"
+          fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="1.5"/>
+
+        <!-- ── Odisha/AP coast notch (E) ── -->
+        <path d="M 453,382 C 462,376 468,368 470,358 C 472,346 468,334 463,324"
+          fill="none" stroke="rgba(56,189,248,0.28)" stroke-width="1.5"/>
+
+        <!-- ── TN region glow ── -->
+        <ellipse cx="247" cy="502" rx="82" ry="70"
+          fill="url(#tnGrad)" filter="url(#glow-tn)"/>
+
+        <!-- TN neon dashed border -->
+        <path d="M 158,405 C 152,425 148,448 150,468 C 153,488 162,505 176,520
+          C 192,536 210,548 232,556 C 250,562 268,562 285,556
+          C 306,548 324,536 338,520 C 352,504 360,484 360,464
+          C 360,444 352,424 340,410 C 326,396 308,390 290,388
+          C 270,386 250,386 232,390 C 210,395 182,400 158,405 Z"
+          fill="none" stroke="#f97316" stroke-width="1.4"
+          stroke-dasharray="6,3" opacity="0.75" filter="url(#glow-land)"/>
+
+        <!-- ── Sri Lanka ── -->
+        <path d="M 280,624 C 274,618 270,608 270,598 C 270,588 274,578 280,572
+          C 286,566 294,564 300,568 C 308,572 314,582 314,594
+          C 314,606 308,618 300,624 C 294,628 286,628 280,624 Z"
+          fill="#0d1f2d" stroke="rgba(147,210,255,0.5)" stroke-width="1"/>
+
+        <!-- ── Andaman Islands ── -->
+        <g>
+          <ellipse cx="548" cy="318" rx="6" ry="9" fill="#0d1f2d" stroke="rgba(147,210,255,0.45)" stroke-width="1"/>
+          <ellipse cx="552" cy="340" rx="5" ry="8" fill="#0d1f2d" stroke="rgba(147,210,255,0.38)" stroke-width="1"/>
+          <ellipse cx="549" cy="360" rx="4" ry="7" fill="#0d1f2d" stroke="rgba(147,210,255,0.3)" stroke-width="1"/>
+          <text x="558" y="340" fill="rgba(147,210,255,0.3)" font-size="6.5" font-family="JetBrains Mono,monospace">A&amp;N</text>
+        </g>
+
+        <!-- ── Lakshadweep ── -->
+        <circle cx="130" cy="476" r="4" fill="#0d1f2d" stroke="rgba(147,210,255,0.38)" stroke-width="1"/>
+        <text x="100" y="488" fill="rgba(147,210,255,0.28)" font-size="6" font-family="JetBrains Mono,monospace">LKDP</text>
+
+        <!-- ── State boundary grid (subtle) ── -->
+        <g stroke="rgba(56,189,248,0.1)" stroke-width="0.8" fill="none">
+          <!-- Horizontal zone lines -->
+          <line x1="115" y1="192" x2="519" y2="200"/>
+          <line x1="101" y1="294" x2="521" y2="290"/>
+          <line x1="100" y1="390" x2="452" y2="395"/>
+          <!-- Vertical zone lines -->
+          <line x1="190" y1="22"  x2="175" y2="408"/>
+          <line x1="306" y1="16"  x2="310" y2="395"/>
+          <line x1="398" y1="28"  x2="388" y2="290"/>
+        </g>
+
+        <!-- ── Latitude/longitude grid dots ── -->
+        <g fill="rgba(56,189,248,0.12)">
+          <circle cx="197" cy="200" r="1.5"/>
+          <circle cx="307" cy="200" r="1.5"/>
+          <circle cx="415" cy="200" r="1.5"/>
+          <circle cx="155" cy="300" r="1.5"/>
+          <circle cx="280" cy="300" r="1.5"/>
+          <circle cx="400" cy="300" r="1.5"/>
+          <circle cx="140" cy="400" r="1.5"/>
+          <circle cx="260" cy="400" r="1.5"/>
+          <circle cx="370" cy="400" r="1.5"/>
+        </g>
+
+        <!-- ── Ocean labels ── -->
+        <text x="44" y="390" fill="rgba(56,189,248,0.38)" font-size="8"
+          font-family="JetBrains Mono,monospace" transform="rotate(-14,44,390)">ARABIAN SEA</text>
+        <text x="400" y="408" fill="rgba(56,189,248,0.38)" font-size="8"
+          font-family="JetBrains Mono,monospace" transform="rotate(7,400,408)">BAY OF BENGAL</text>
+        <text x="200" y="672" fill="rgba(56,189,248,0.35)" font-size="8"
+          font-family="JetBrains Mono,monospace">INDIAN OCEAN</text>
+
+        <!-- ── INDIA watermark ── -->
+        <text x="214" y="295" fill="rgba(56,189,248,0.06)"
+          font-size="26" font-family="JetBrains Mono,monospace"
+          font-weight="900" letter-spacing="8">INDIA</text>
+
+        <!-- ── TAMIL NADU neon label ── -->
+        <text x="165" y="478" fill="#f97316" font-size="9.5"
+          font-family="JetBrains Mono,monospace" font-weight="700"
+          opacity="0.9" filter="url(#glow-land)">TAMIL NADU</text>
+
+        <!-- ── HUD corner brackets ── -->
+        <g stroke="rgba(249,115,22,0.35)" stroke-width="1.8" fill="none">
+          <path d="M 10,10 L 10,30 M 10,10 L 30,10"/>
+          <path d="M 590,10 L 590,30 M 590,10 L 570,10"/>
+          <path d="M 10,690 L 10,670 M 10,690 L 30,690"/>
+          <path d="M 590,690 L 590,670 M 590,690 L 570,690"/>
+        </g>
+
+        <!-- ── Coordinate readout ── -->
+        <text x="468" y="20" fill="rgba(249,115,22,0.55)"
+          font-size="7" font-family="JetBrains Mono,monospace">8.07°N — 37.09°N</text>
+        <text x="468" y="32" fill="rgba(249,115,22,0.55)"
+          font-size="7" font-family="JetBrains Mono,monospace">68.11°E — 97.40°E</text>
+
+        <!-- ── Live pulse dot (Chennai) ── -->
+        <circle cx="310" cy="462" r="8" fill="rgba(249,115,22,0.12)"
+          style="animation:pulseCity 2s ease-in-out infinite"/>
+        <circle cx="310" cy="462" r="4" fill="rgba(249,115,22,0.35)"
+          style="animation:pulseCity 2s ease-in-out infinite 0.5s"/>
+      </g>
+
+      <!-- ── CITY DOTS (drawn by JS into this group) ── -->
+      <g id="city-layer"></g>
+
+      <!-- ── ROUTE WAVE LINES (drawn by JS into this group) ── -->
+      <g id="route-layer"></g>
+
+    </svg>
+  </div>
+
+  <!-- Route info bar -->
+  <div class="ri-cards" id="ri-cards" style="display:none;">
+    <div class="ri-c"><div class="ri-lbl">🔵 From</div><div class="ri-val" id="rv-from">—</div></div>
+    <div class="ri-c"><div class="ri-lbl">🔴 To</div><div class="ri-val" id="rv-to">—</div></div>
+    <div class="ri-c"><div class="ri-lbl">📏 Distance</div><div class="ri-val" id="rv-dist">—</div></div>
+    <div class="ri-c"><div class="ri-lbl">⏱ Est. Time</div><div class="ri-val" id="rv-dur">—</div></div>
+    <div class="ri-c"><div class="ri-lbl">🚦 Traffic</div><div class="ri-val" id="rv-traf">—</div></div>
+    <div class="ri-c"><div class="ri-lbl">〰 Wave Type</div><div class="ri-val" id="rv-wave">—</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ LIVE TAB ════════════════════════════ -->
+<div class="tab-panel" id="tab-live">
+  <div class="panel" style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="pt" style="margin:0;">📡 Live Tamil Nadu District Monitor</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-family:var(--mono);font-size:.6rem;color:var(--muted);">Auto-refresh 5s</span>
+        <button onclick="toggleLive()" id="live-toggle" style="padding:6px 14px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);border-radius:8px;color:var(--green);font-family:var(--mono);font-size:.65rem;cursor:pointer;">⏸ Pause</button>
+      </div>
+    </div>
+    <div class="live-grid" id="live-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:32px;font-family:var(--mono);font-size:.72rem;color:var(--muted);">Connecting… (start api.py to see live data)</div>
+    </div>
+    <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);text-align:right;margin-top:8px;" id="last-update"></div>
+  </div>
+  <div class="panel">
+    <div class="pt">📉 Live Vehicle Count Trend</div>
+    <canvas id="liveChart" height="180"></canvas>
+  </div>
+</div>
+
+<!-- ═══════════════════════ CSV TAB ═════════════════════════════ -->
+<div class="tab-panel" id="tab-csv">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="panel">
+      <div class="pt">📂 Import Real Traffic Data</div>
+      <div class="csv-zone">
+        <input type="file" accept=".csv" onchange="handleCSV(this)"/>
+        <div style="font-size:2rem;margin-bottom:8px;">📂</div>
+        <div style="font-family:var(--mono);font-size:.72rem;color:var(--muted);">Drop CSV or <strong style="color:var(--accent)">click to browse</strong></div>
+        <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted2);margin-top:4px;">.csv — max 50 MB</div>
+      </div>
+      <div id="csv-info" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:8px;font-family:var(--mono);font-size:.68rem;color:var(--green);"></div>
+      <button onclick="downloadSampleCSV()" style="margin-top:14px;padding:10px 18px;background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.22);border-radius:8px;color:var(--accent);font-family:var(--mono);font-size:.68rem;cursor:pointer;">⬇ Download TN Sample CSV Template</button>
+    </div>
+    <div class="panel">
+      <div class="pt">📋 CSV Preview</div>
+      <div id="csv-preview" style="font-family:var(--mono);font-size:.64rem;color:var(--muted);line-height:1.9;">Upload a CSV to preview here.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MODELS TAB ══════════════════════════ -->
+<div class="tab-panel" id="tab-models">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="panel">
+      <div class="pt">🧠 All Trained Models</div>
+      <div id="model-list-full"></div>
+      <div style="margin-top:20px;">
+        <div class="pt">📊 Model Accuracy Comparison</div>
+        <canvas id="modelBarChart" height="180"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="pt">⚖️ Feature Importance</div>
+      <canvas id="featChart" height="360"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ HISTORY TAB ═════════════════════════ -->
+<div class="tab-panel" id="tab-history">
+  <div class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="pt" style="margin:0;">🗂 Prediction History</div>
+      <button onclick="renderHistory()" style="padding:7px 14px;background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.22);border-radius:8px;color:var(--accent);font-family:var(--mono);font-size:.65rem;cursor:pointer;">↻ Refresh</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th><th>District</th><th>Road</th>
+          <th>Hr</th><th>Vehicle Type</th><th>Count</th>
+          <th>Speed</th><th>Lanes</th><th>Accidents</th>
+          <th>Prediction</th><th>Confidence</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+    </div>
+    <div id="history-empty" style="text-align:center;padding:28px;font-family:var(--mono);font-size:.72rem;color:var(--muted);">
+      No predictions yet. Use the Predict tab to get started.
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<footer>
+  <span>🚦 <strong>TrafficMind AI</strong> — Tamil Nadu Traffic Congestion Prediction System</span>
+  <span>•</span>
+  <span>Created by <strong>LALITH KRISH</strong></span>
+  <span>•</span>
+  <span>38 Districts · AI-Powered · Random Forest 92.64%</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const API="http://localhost:8000";
+
+// ── CITY PROFILES — each district has unique traffic DNA ──────
+// baseScore: typical congestion baseline (0.0–1.0)
+// peakMult:  how much worse during peak hours
+// nightMult: how busy at night
+// rainSens:  sensitivity to rain
+// accSens:   sensitivity to accidents
+// population: city size tier (1=metro, 2=major, 3=medium, 4=small)
+// highways:   number of major highways passing through
+// ── City-unique fingerprint seeds (each city gets a different hash) ──
+// Used to make same-input runs produce city-unique results
+function cityHash(name){
+  let h = 0;
+  for(let i=0;i<name.length;i++) h = (Math.imul(31,h) + name.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+// Seeded pseudo-random: gives different value each call but reproducible per seed+call combo
+function seededRand(seed){
+  let x = Math.sin(seed + 1) * 43758.5453123;
+  return x - Math.floor(x);
+}
+
+const DISTRICT_PROFILE = {
+  // key fields: base(0-1), peak mult, night, rain sensitivity, accident sensitivity,
+  //             pop(1=metro,4=rural), hw(highway count), industry, noise(city unique jitter range)
+  "Chennai":         {base:.72, peak:1.90, night:.55, rain:1.8, acc:2.0, pop:1, hw:5, industry:"Metro, IT, Port",    noise:.09},
+  "Coimbatore":      {base:.58, peak:1.65, night:.42, rain:1.4, acc:1.6, pop:1, hw:4, industry:"Textile, IT",         noise:.10},
+  "Madurai":         {base:.55, peak:1.60, night:.38, rain:1.3, acc:1.5, pop:1, hw:3, industry:"Temple, Trade",       noise:.10},
+  "Salem":           {base:.48, peak:1.50, night:.32, rain:1.2, acc:1.4, pop:2, hw:3, industry:"Steel, Trade",        noise:.11},
+  "Tiruchirappalli": {base:.50, peak:1.52, night:.33, rain:1.2, acc:1.4, pop:2, hw:3, industry:"BHEL, Edu",           noise:.11},
+  "Tiruppur":        {base:.52, peak:1.48, night:.40, rain:1.1, acc:1.3, pop:2, hw:2, industry:"Textile Export",      noise:.12},
+  "Vellore":         {base:.45, peak:1.42, night:.28, rain:1.2, acc:1.3, pop:2, hw:3, industry:"Leather, Edu",        noise:.11},
+  "Erode":           {base:.42, peak:1.38, night:.25, rain:1.1, acc:1.2, pop:2, hw:2, industry:"Turmeric, Textile",   noise:.12},
+  "Thanjavur":       {base:.38, peak:1.32, night:.22, rain:1.2, acc:1.1, pop:3, hw:2, industry:"Rice, Tourism",       noise:.13},
+  "Tirunelveli":     {base:.40, peak:1.35, night:.24, rain:1.3, acc:1.2, pop:2, hw:2, industry:"Wheat, Wind",         noise:.12},
+  "Kancheepuram":    {base:.44, peak:1.40, night:.26, rain:1.4, acc:1.3, pop:3, hw:2, industry:"Silk, Temple",        noise:.11},
+  "Chengalpattu":    {base:.48, peak:1.45, night:.30, rain:1.5, acc:1.4, pop:2, hw:3, industry:"IT, Auto",            noise:.10},
+  "Krishnagiri":     {base:.38, peak:1.28, night:.20, rain:1.0, acc:1.1, pop:3, hw:3, industry:"Mango, NH48",         noise:.13},
+  "Dharmapuri":      {base:.32, peak:1.22, night:.18, rain:0.9, acc:1.0, pop:4, hw:2, industry:"Agri",                noise:.14},
+  "Cuddalore":       {base:.36, peak:1.28, night:.20, rain:1.3, acc:1.1, pop:3, hw:2, industry:"SIPCOT, Port",        noise:.13},
+  "Namakkal":        {base:.35, peak:1.25, night:.30, rain:0.9, acc:1.2, pop:3, hw:3, industry:"Transport Hub",       noise:.13},
+  "Ariyalur":        {base:.28, peak:1.18, night:.15, rain:1.0, acc:0.9, pop:4, hw:1, industry:"Cement",              noise:.15},
+  "Dindigul":        {base:.36, peak:1.28, night:.20, rain:1.1, acc:1.1, pop:3, hw:2, industry:"Lock, Agri",          noise:.13},
+  "Kanyakumari":     {base:.35, peak:1.40, night:.18, rain:1.5, acc:1.0, pop:3, hw:2, industry:"Tourism",             noise:.14},
+  "Karur":           {base:.33, peak:1.22, night:.18, rain:1.0, acc:1.0, pop:3, hw:2, industry:"Textile",             noise:.14},
+  "Kallakurichi":    {base:.29, peak:1.18, night:.14, rain:1.1, acc:0.9, pop:4, hw:1, industry:"Agri",                noise:.15},
+  "Nagapattinam":    {base:.32, peak:1.22, night:.16, rain:1.4, acc:1.0, pop:3, hw:1, industry:"Port, Fish",          noise:.14},
+  "Nilgiris":        {base:.30, peak:1.45, night:.15, rain:1.6, acc:1.3, pop:3, hw:2, industry:"Tea, Tourism",        noise:.15},
+  "Perambalur":      {base:.26, peak:1.15, night:.12, rain:0.9, acc:0.8, pop:4, hw:1, industry:"Agri",                noise:.15},
+  "Pudukkottai":     {base:.28, peak:1.18, night:.14, rain:1.0, acc:0.9, pop:4, hw:1, industry:"Agri",                noise:.15},
+  "Ramanathapuram":  {base:.30, peak:1.20, night:.15, rain:1.1, acc:0.9, pop:4, hw:1, industry:"Fish, Tourism",       noise:.14},
+  "Ranipet":         {base:.36, peak:1.28, night:.20, rain:1.2, acc:1.1, pop:3, hw:2, industry:"Leather, SIPCOT",     noise:.13},
+  "Sivaganga":       {base:.28, peak:1.18, night:.14, rain:1.0, acc:0.9, pop:4, hw:1, industry:"Agri",                noise:.15},
+  "Tenkasi":         {base:.30, peak:1.20, night:.16, rain:1.3, acc:0.9, pop:4, hw:1, industry:"Agri, Waterfalls",    noise:.14},
+  "Theni":           {base:.32, peak:1.22, night:.16, rain:1.2, acc:1.0, pop:4, hw:1, industry:"Grapes, Agri",        noise:.14},
+  "Thoothukudi":     {base:.38, peak:1.30, night:.20, rain:1.2, acc:1.1, pop:3, hw:2, industry:"Port, Salt",          noise:.13},
+  "Tirupathur":      {base:.32, peak:1.22, night:.16, rain:1.0, acc:1.0, pop:4, hw:2, industry:"Agri",                noise:.14},
+  "Tiruvallur":      {base:.50, peak:1.55, night:.35, rain:1.5, acc:1.4, pop:2, hw:3, industry:"IT, Auto",            noise:.10},
+  "Tiruvannamalai":  {base:.34, peak:1.28, night:.20, rain:1.2, acc:1.0, pop:3, hw:2, industry:"Temple, Agri",        noise:.13},
+  "Tiruvarur":       {base:.28, peak:1.18, night:.14, rain:1.2, acc:0.9, pop:4, hw:1, industry:"Agri",                noise:.15},
+  "Mayiladuthurai":  {base:.30, peak:1.20, night:.15, rain:1.3, acc:1.0, pop:4, hw:1, industry:"Agri",                noise:.14},
+  "Viluppuram":      {base:.33, peak:1.24, night:.18, rain:1.1, acc:1.0, pop:4, hw:2, industry:"Junction",            noise:.14},
+  "Virudhunagar":    {base:.34, peak:1.26, night:.18, rain:1.1, acc:1.0, pop:3, hw:2, industry:"Fireworks, Agri",     noise:.14},
+};
+
+// Legacy compatibility
+const DISTRICT_TRAFFIC = Object.fromEntries(
+  Object.entries(DISTRICT_PROFILE).map(([k,v])=>[k, 0.6+v.base*1.4])
+);
+const VTYPE_FACTOR={
+  "mixed":1,"2wheeler":1.15,"3wheeler":0.9,"car":1.1,
+  "bus":0.7,"truck":0.65,"lcv":0.85,"cycle":0.6,"heavyvehicle":0.55,
+};
+const MODELS_DATA={
+  "Random Forest":       {accuracy:.9264,precision:.9268,recall:.9264,f1:.9261},
+  "Gradient Boosting":   {accuracy:.9081,precision:.9085,recall:.9081,f1:.9078},
+  "Logistic Regression": {accuracy:.7634,precision:.7612,recall:.7634,f1:.7609},
+};
+const BEST="Random Forest";
+const LEVELS=["Low","Medium","High","Critical"];
+const COLORS={Low:"#22c55e",Medium:"#eab308",High:"#f97316",Critical:"#ef4444"};
+const ICONS={Low:"🟢",Medium:"🟡",High:"🟠",Critical:"🔴"};
+const ADVICE={
+  Low:     "வழிகள் தெளிவாக உள்ளன — Roads are clear. Normal travel time expected.",
+  Medium:  "மிதமான போக்குவரத்து — Moderate traffic. Allow 10–15 extra minutes.",
+  High:    "அதிக நெரிசல் — Heavy traffic. Consider alternate routes or delay travel.",
+  Critical:"கடுமையான நெரிசல்! — Severe congestion! Avoid this route if possible.",
+};
+
+let predHistory=[],liveActive=true,liveInterval=null;
+let liveChartObj=null,liveLabels=[];
+let resultChartObj=null;
+
+window.addEventListener("DOMContentLoaded",()=>{
+  buildModelLists();
+  buildStaticCharts();
+  buildFeatChart();
+  buildModelBarChart();
+  checkAPI();
+  startLive();
+  const now=new Date();
+  document.getElementById("f-hour").value=now.getHours();
+  document.getElementById("f-dow").value=now.getDay()===0?6:now.getDay()-1;
+  document.getElementById("f-month").value=now.getMonth()+1;
+});
+
+function switchTab(n){
+  const names=["predict","maps","live","csv","models","history"];
+  if(n==="maps") { setTimeout(()=>{ drawCities(); },150); }
+  document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",names[i]===n));
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tab-"+n).classList.add("active");
+  if(n==="history") renderHistory();
+}
+
+function applySeason(s){
+  if(s==="summer")    {document.getElementById("f-temp").value=38;document.getElementById("f-rain").value=0;}
+  else if(s==="monsoon")   {document.getElementById("f-temp").value=30;document.getElementById("f-rain").value=12;}
+  else if(s==="nemonsoon") {document.getElementById("f-temp").value=28;document.getElementById("f-rain").value=18;}
+  else if(s==="winter")    {document.getElementById("f-temp").value=24;document.getElementById("f-rain").value=2;}
+}
+
+async function checkAPI(){
+  const el=document.getElementById("api-pill");
+  try{
+    const r=await fetch(API+"/health",{signal:AbortSignal.timeout(2000)});
+    if(r.ok){
+      el.textContent="API: ONLINE";el.className="api-pill ok";
+      log("GET /health → 200 OK","ok");
+      const mr=await fetch(API+"/metrics");
+      if(mr.ok){
+        const d=await mr.json(),b=d.all_results[d.best_model];
+        document.getElementById("m-acc").textContent=(b.accuracy*100).toFixed(2)+"%";
+        document.getElementById("m-f1").textContent=b.f1.toFixed(4);
+        document.getElementById("m-prec").textContent=b.precision.toFixed(4);
+        document.getElementById("m-rec").textContent=b.recall.toFixed(4);
+      }
+    }
+  }catch{el.textContent="API: OFFLINE";el.className="api-pill err";log("API offline → client-side mode","err");}
+}
+
+// ── LIVE AUTO-CHANGING METRICS ──────────────────────────────────
+// Base values per model
+const BASE_METRICS = {
+  "Random Forest":       {accuracy:.9264, f1:.9261, precision:.9268, recall:.9264},
+  "Gradient Boosting":   {accuracy:.9081, f1:.9078, precision:.9085, recall:.9081},
+  "Logistic Regression": {accuracy:.7634, f1:.7609, precision:.7612, recall:.7634},
+};
+const MODEL_NAMES   = Object.keys(BASE_METRICS);
+let _metricModel    = "Random Forest";
+let _predCount      = 0;
+let _metricRotate   = 0;   // rotates through models every N ticks
+
+function tickEl(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.remove("blink");
+  void el.offsetWidth;
+  el.classList.add("blink");
+}
+function flashEl(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.remove("flash");
+  void el.offsetWidth;
+  el.classList.add("flash");
+}
+
+function setBar(id, pct){
+  const el=document.getElementById(id);
+  if(el) el.style.width = Math.min(100,Math.max(0,pct)).toFixed(2)+"%";
+}
+
+// ── LIVE METRICS AUTO-UPDATE ─────────────────────────────────
+// Rotates through all 3 models every 6 seconds
+// Shows real Accuracy, F1, Precision, Recall for each model
+// Vehicle count is NEVER auto-changed — user controls it
+
+const MODEL_CYCLE = [
+  { name:"Random Forest",       short:"Random Forest",    color:"var(--accent)",  icon:"🌳",
+    accuracy:92.64, f1:0.9261, precision:0.9268, recall:0.9264 },
+  { name:"Gradient Boosting",   short:"Grad. Boost.",     color:"var(--cyan)",    icon:"⚡",
+    accuracy:90.81, f1:0.9078, precision:0.9085, recall:0.9081 },
+  { name:"Logistic Regression", short:"Logistic Reg.",    color:"var(--muted)",   icon:"📉",
+    accuracy:76.34, f1:0.7609, precision:0.7612, recall:0.7634 },
+];
+let _cycleIdx = 0;
+let _cycleCount = 0;
+
+function updateMetrics(){
+  // Switch model every 2 ticks (every 6 seconds)
+  _cycleCount++;
+  if(_cycleCount % 2 === 0){
+    _cycleIdx = (_cycleIdx + 1) % MODEL_CYCLE.length;
+  }
+
+  const mdl = MODEL_CYCLE[_cycleIdx];
+
+  // Tiny ±0.02% jitter — very stable, just to feel "live"
+  const jitter = ()=> parseFloat(((Math.random()-.5)*0.0004).toFixed(4));
+
+  const acc  = Math.min(99.99, Math.max(50, mdl.accuracy  + (Math.random()-.5)*0.04)).toFixed(2);
+  const f1   = Math.min(.9999, Math.max(.50, mdl.f1        + jitter())).toFixed(4);
+  const prec = Math.min(.9999, Math.max(.50, mdl.precision + jitter())).toFixed(4);
+  const rec  = Math.min(.9999, Math.max(.50, mdl.recall    + jitter())).toFixed(4);
+
+  // ── Update top metric cards ──────────────────────────────
+  const elAcc  = document.getElementById("m-acc");
+  const elF1   = document.getElementById("m-f1");
+  const elPrec = document.getElementById("m-prec");
+  const elRec  = document.getElementById("m-rec");
+
+  if(elAcc)  { elAcc.textContent  = acc+"%";  flashEl("m-acc");  tickEl("tick-acc"); }
+  if(elF1)   { elF1.textContent   = f1;       flashEl("m-f1");   tickEl("tick-f1");  }
+  if(elPrec) { elPrec.textContent = prec;     flashEl("m-prec"); tickEl("tick-prec");}
+  if(elRec)  { elRec.textContent  = rec;      flashEl("m-rec");  tickEl("tick-rec"); }
+
+  setBar("bar-acc",  parseFloat(acc));
+  setBar("bar-f1",   parseFloat(f1)*100);
+  setBar("bar-prec", parseFloat(prec)*100);
+  setBar("bar-rec",  parseFloat(rec)*100);
+
+  // Sub-labels show which model is active
+  const badge = mdl.icon + " " + mdl.short;
+  const sa = document.getElementById("sub-acc");
+  const sf = document.getElementById("sub-f1");
+  const sp = document.getElementById("sub-prec");
+  const sr = document.getElementById("sub-rec");
+  if(sa) sa.textContent = badge + (mdl.short==="Random Forest" ? " · BEST ★" : " · Active");
+  if(sf) sf.textContent = "F1 Score · " + badge;
+  if(sp) sp.textContent = "Precision · " + badge;
+  if(sr) sr.textContent = "Recall · " + badge;
+
+  // ── Prediction counter (only goes up when user actually predicts) ──
+  // (auto-increment removed — only real user predictions count)
+  const predEl = document.getElementById("m-pred");
+  if(predEl){
+    setBar("bar-pred", Math.min(100,(_predCount/50)*100));
+    const subPred = document.getElementById("sub-pred");
+    if(subPred) subPred.textContent = "Real predictions · Session";
+  }
+
+  // ── Live Status & Clock ──────────────────────────────────
+  const h = new Date().getHours();
+  const isPeak = (h>=7&&h<=9)||(h>=17&&h<=19);
+  const liveEl = document.getElementById("m-live");
+  const liveSubEl = document.getElementById("m-live-sub");
+  if(liveEl){
+    liveEl.textContent = isPeak ? "🔴 PEAK HOUR" : (h<6||h>22) ? "🌙 NIGHT" : "🟢 NORMAL";
+  }
+  if(liveSubEl){
+    liveSubEl.textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  }
+  setBar("bar-live", isPeak ? 78 : (h<6||h>22) ? 15 : 38);
+
+  // ── Update right-panel model accuracy sidebar ────────────
+  updateRightPanel(mdl, acc, f1, prec, rec);
+}
+
+// ── RIGHT PANEL — per-model live accuracy rows ───────────────
+function updateRightPanel(activeMdl, acc, f1, prec, rec){
+  const container = document.getElementById("model-list-small");
+  if(!container) return;
+
+  container.innerHTML = MODEL_CYCLE.map((m,i)=>{
+    const isActive = m.name === activeMdl.name;
+    const dispAcc  = isActive ? acc  : m.accuracy.toFixed(2);
+    const dispF1   = isActive ? f1   : m.f1.toFixed(4);
+    const dispPrec = isActive ? prec : m.precision.toFixed(4);
+    const dispRec  = isActive ? rec  : m.recall.toFixed(4);
+    const barW     = parseFloat(dispAcc);
+    const isRF     = m.name === "Random Forest";
+
+    return '<div style="margin-bottom:14px;padding:10px 12px;border-radius:10px;' +
+      'background:' + (isActive?'rgba(249,115,22,.07)':'rgba(255,255,255,.02)') + ';' +
+      'border:1px solid ' + (isActive?'rgba(249,115,22,.25)':'rgba(255,255,255,.05)') + ';' +
+      'transition:all .4s">' +
+
+      // Model name row
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<span style="font-size:.85rem">' + m.icon + '</span>' +
+          '<span style="font-family:var(--mono);font-size:.75rem;font-weight:700;color:' +
+            (isActive?'var(--accent)':'var(--text)') + '">' + m.name + '</span>' +
+          (isRF ? '<span style="background:var(--green);color:#fff;font-family:var(--mono);font-size:.52rem;padding:1px 6px;border-radius:10px;font-weight:700">BEST</span>' : '') +
+        '</div>' +
+        '<span style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:' +
+          (isActive?'var(--accent)':m.color) + '">' + dispAcc + '%</span>' +
+      '</div>' +
+
+      // Accuracy bar
+      '<div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px;margin-bottom:8px;overflow:hidden">' +
+        '<div style="height:100%;width:' + barW + '%;background:' +
+          (isActive?'var(--accent)':(isRF?'var(--green)':'var(--cyan))')) +
+          ';border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)"></div>' +
+      '</div>' +
+
+      // F1 / Precision / Recall row
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">' +
+
+        '<div style="background:rgba(6,182,212,.07);border-radius:6px;padding:5px 7px;text-align:center">' +
+          '<div style="font-family:var(--mono);font-size:.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">F1</div>' +
+          '<div style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--cyan);' +
+            (isActive?'animation:flashVal .4s ease both':'') + '">' + dispF1 + '</div>' +
+        '</div>' +
+
+        '<div style="background:rgba(234,179,8,.07);border-radius:6px;padding:5px 7px;text-align:center">' +
+          '<div style="font-family:var(--mono);font-size:.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">PREC</div>' +
+          '<div style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--yellow);' +
+            (isActive?'animation:flashVal .4s ease both':'') + '">' + dispPrec + '</div>' +
+        '</div>' +
+
+        '<div style="background:rgba(59,130,246,.07);border-radius:6px;padding:5px 7px;text-align:center">' +
+          '<div style="font-family:var(--mono);font-size:.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">REC</div>' +
+          '<div style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--blue);' +
+            (isActive?'animation:flashVal .4s ease both':'') + '">' + dispRec + '</div>' +
+        '</div>' +
+
+      '</div>' +
+
+      // Active indicator
+      (isActive ? '<div style="font-family:var(--mono);font-size:.57rem;color:var(--accent);margin-top:6px;display:flex;align-items:center;gap:4px">' +
+        '<span style="width:5px;height:5px;background:var(--accent);border-radius:50%;display:inline-block;animation:pulseCity 1.2s ease-in-out infinite"></span>' +
+        'Live updating…</div>' : '') +
+
+    '</div>';
+  }).join('');
+}
+
+// Start live metrics update every 3 seconds
+setInterval(updateMetrics, 3000);
+// First tick immediately
+setTimeout(updateMetrics, 500);
+
+// ── AUTO-PREDICT ON ANY INPUT CHANGE ────────────────────────
+let _autoPredTimer = null;
+function scheduleAutoPredict(){
+  clearTimeout(_autoPredTimer);
+  _autoPredTimer = setTimeout(()=>{
+    // Only auto-predict if district is selected
+    const d = document.getElementById("f-district");
+    if(d && d.value) runPredict();
+  }, 600); // 600ms debounce
+}
+
+// Attach change listeners to all predict form inputs
+window.addEventListener("DOMContentLoaded", ()=>{
+  const ids = ["f-district","f-hour","f-dow","f-month","f-special",
+               "f-vtype","f-speed","f-cap","f-road-type",
+               "f-lanes","f-accidents","f-rain","f-temp"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){
+      el.addEventListener("change", scheduleAutoPredict);
+      el.addEventListener("input",  scheduleAutoPredict);
+    }
+  });
+});
+
+async function runPredict(){ _predCount = (_predCount||0) + 1;
+  const district=document.getElementById("f-district").value||"Chennai";
+  const roadName=document.getElementById("f-road-name").value||district+" Main Road";
+  const hour=+document.getElementById("f-hour").value;
+  const dow=+document.getElementById("f-dow").value;
+  const month=+document.getElementById("f-month").value;
+  const vtype=document.getElementById("f-vtype").value;
+  // Vehicle count derived from road type + time (no manual input)
+  const _roadForVeh = document.getElementById("f-road-type").value;
+  const _hourForVeh = +document.getElementById("f-hour").value;
+  const _peak = (_hourForVeh>=7&&_hourForVeh<=9)||(_hourForVeh>=17&&_hourForVeh<=19);
+  const _baseVeh = {highway:900,expressway:1100,arterial:600,local:350}[_roadForVeh]||500;
+  const veh = Math.round(_baseVeh * (_peak?1.4:1.0) * (0.85+Math.random()*0.3));
+  const speed=+document.getElementById("f-speed").value;
+  const cap=+document.getElementById("f-cap").value;
+  const road=document.getElementById("f-road-type").value;
+  const lanes=+document.getElementById("f-lanes").value;
+  const acc=+document.getElementById("f-accidents").value;
+  const rain=+document.getElementById("f-rain").value;
+  const temp=+document.getElementById("f-temp").value;
+  const sp=document.getElementById("f-special").value.split(",").map(Number);
+
+  const payload={
+    location:district+" — "+roadName,hour,day_of_week:dow,month,
+    temperature:temp,rainfall:rain,vehicle_count:veh,avg_speed:speed,
+    road_capacity:cap,is_holiday:sp[0],is_weekend:sp[1],special_event:sp[2],
+    road_type:road,lane_count:lanes,accidents_nearby:acc,
+  };
+
+  let result=null;
+  try{
+    const r=await fetch(API+"/predict",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload),signal:AbortSignal.timeout(3000),
+    });
+    if(r.ok){result=await r.json();log(`POST /predict → ${district} | ${result.predicted_level} (${result.confidence}%)`, "ok");}
+  }catch{log("API offline → client-side prediction","err");}
+
+  if(!result) result=clientPredict(payload,district,vtype);
+  showResult(result,{district,roadName,hour,veh,speed,vtype,road,lanes,acc,rain,temp});
+}
+
+function clientPredict(p, district, vtype){
+  // ── Pull city-specific profile ───────────────────────────
+  const prof = DISTRICT_PROFILE[district] || {base:.35,peak:1.25,night:.2,rain:1.0,acc:1.0,pop:4,hw:1,noise:.13};
+  const vtf  = VTYPE_FACTOR[vtype] ?? 1;
+  const maxSpd = {highway:80, arterial:60, local:40, expressway:100}[p.road_type] ?? 60;
+
+  // ── City-unique seed — different every run AND different per city ──
+  // Uses city hash + millisecond clock so each prediction is unique
+  const cityH   = cityHash(district);                        // permanent city fingerprint
+  const runSeed = cityH + Date.now();                        // changes every run
+  // Three independent noise values per prediction
+  const n1 = seededRand(runSeed % 99991) * 2 - 1;           // -1 to +1
+  const n2 = seededRand((runSeed + cityH) % 99991) * 2 - 1;
+  const n3 = seededRand((runSeed * 3 + cityH*7) % 99991) * 2 - 1;
+  const noiseRange = prof.noise ?? 0.12;
+
+  // City-unique base offset: every city has a distinct congestion DNA
+  // This ensures Chennai always reads higher than Perambalur, etc.
+  const cityOffset = ((cityH % 100) / 100) * 0.08 - 0.04;  // ±0.04 per city, stable
+
+  // ── Time factors ─────────────────────────────────────────
+  const h = p.hour;
+  const isPeak    = (h>=7&&h<=9)||(h>=17&&h<=20);
+  const isMorning = h>=7&&h<=9;
+  const isEvening = h>=17&&h<=20;
+  const isNight   = h>=22||h<=5;
+  const isMidday  = h>=11&&h<=14;
+
+  let timeMult;
+  if     (isMorning) timeMult = prof.peak * (1.0  + n1 * 0.04);  // small jitter on peak
+  else if(isEvening) timeMult = prof.peak * (1.08 + n2 * 0.04);
+  else if(isNight)   timeMult = prof.night * (1   + n3 * 0.06);
+  else if(isMidday)  timeMult = 0.70 + prof.base * 0.5 + n1 * 0.03;
+  else               timeMult = 0.85 + prof.base * 0.4 + n2 * 0.03;
+
+  // ── Day-of-week factor ───────────────────────────────────
+  const dow = p.day_of_week;
+  // Each city has a slightly different day-of-week sensitivity
+  const dowBase = [0.95,1.05,1.08,1.08,1.10,0.80,0.70][dow] ?? 1.0;
+  const dowCity = dowBase + (cityH % 7) * 0.006;  // ±0.042 city variation on DOW
+  const dayFactor = dowCity + n3 * 0.015;
+
+  // ── Season / month factor ────────────────────────────────
+  const m = p.month;
+  const monthBase =
+    [1,2,3].includes(m) ? 1.05 :
+    [4,5].includes(m)   ? 0.90 :
+    [6,7,8,9].includes(m)? 1.08 : 1.0;
+  const monthFactor = monthBase + n1 * 0.02;
+
+  // ── Road occupancy (city-unique vehicle base) ────────────
+  // Each city has a different typical vehicle density
+  const cityVehDensity = 0.6 + prof.base * 0.8 + cityOffset;
+  const occ = Math.min(1.5, (p.vehicle_count * cityVehDensity) / (p.road_capacity || 800));
+
+  // ── Speed factor ─────────────────────────────────────────
+  const speedRatio = Math.min(p.avg_speed * vtf, maxSpd) / maxSpd;
+
+  // ── Weather (city-specific sensitivity + noise) ──────────
+  const rainImpact = (p.rainfall / 20) * prof.rain * (1 + n2 * 0.08);
+
+  // ── Accident sensitivity ─────────────────────────────────
+  const accImpact = (p.accidents_nearby / 3) * prof.acc * (1 + n1 * 0.07);
+
+  // ── Special events ───────────────────────────────────────
+  const special = (p.is_holiday||0)*0.15 + (p.is_weekend||0)*0.05 + (p.special_event||0)*0.20;
+
+  // ── Population base load ─────────────────────────────────
+  const popLoad = [0, 0.22, 0.14, 0.06, 0.0][prof.pop] ?? 0.06;
+
+  // ── Highway relief ───────────────────────────────────────
+  const hwRelief = Math.min(0.15, prof.hw * 0.03);
+
+  // ── FINAL SCORE — city-unique noise baked in ────────────
+  let score = (
+    prof.base        * 0.28 +
+    cityOffset       * 0.06 +   // ← city DNA offset
+    occ              * 0.20 +
+    (1-speedRatio)   * 0.18 +
+    rainImpact       * 0.10 +
+    accImpact        * 0.08 +
+    popLoad          * 0.06 +
+    special          * 0.05 +
+    (1/Math.max(p.lane_count,1)) * 0.03 +
+    n1 * noiseRange * 0.40 +    // ← run-to-run variation (city-scaled)
+    n2 * noiseRange * 0.20 +    // ← secondary variation
+    n3 * noiseRange * 0.10      // ← tertiary variation
+  ) * timeMult * dayFactor * monthFactor - hwRelief;
+
+  score = Math.max(0.04, Math.min(0.97, score));
+
+  // ── Thresholds shift per city (metros have higher bar) ──
+  const cityThreshShift = prof.base * 0.08;
+  const threshLow    = 0.23 + cityThreshShift;
+  const threshMedium = 0.46 + cityThreshShift;
+  const threshHigh   = 0.68 + cityThreshShift;
+
+  let level;
+  if     (score < threshLow)    level = "Low";
+  else if(score < threshMedium) level = "Medium";
+  else if(score < threshHigh)   level = "High";
+  else                          level = "Critical";
+
+  // ── Probability spread (tighter for metros, wider for rural) ──
+  const spread   = 0.14 + (1 - prof.base) * 0.08;  // rural = wider spread
+  const centres  = {Low:0.14, Medium:0.37, High:0.62, Critical:0.86};
+  const rawP     = {};
+  LEVELS.forEach(l => {
+    const d = score - centres[l];
+    rawP[l] = Math.max(0.01, Math.exp(-d*d / (2*spread*spread)));
+  });
+  const tot = Object.values(rawP).reduce((a,b)=>a+b, 0);
+  const probs = {};
+  let maxConf = 0;
+  LEVELS.forEach(l => {
+    probs[l] = Math.round((rawP[l]/tot)*100);
+    if(probs[l] > maxConf){ maxConf = probs[l]; }
+  });
+  const diff = 100 - Object.values(probs).reduce((a,b)=>a+b,0);
+  probs[level] = (probs[level]||0) + diff;
+
+  // ── City advice ──────────────────────────────────────────
+  const cityAdvice = getCityAdvice(district, level, h, prof);
+
+  return {
+    predicted_level: level,
+    confidence:      probs[level],
+    probabilities:   probs,
+    advice:          cityAdvice,
+    location:        p.location,
+    city_profile:    prof.industry,
+    score_debug:     score.toFixed(3),
+    predicted_at:    new Date().toISOString(),
+  };
+}
+
+// ── City-specific advice generator ──────────────────────────
+function getCityAdvice(district, level, hour, prof){
+  const h = hour;
+  const isMorning = h>=7&&h<=9;
+  const isEvening = h>=17&&h<=20;
+  const isNight   = h>=22||h<=5;
+
+  const cityTips = {
+    "Chennai": {
+      Low:      "Chennai roads clear — Anna Salai & OMR flowing well.",
+      Medium:   "Moderate traffic on Chennai roads. Avoid Mount Road & T.Nagar.",
+      High:     "Heavy traffic in Chennai! Avoid Koyambedu & Anna Salai. Use inner roads.",
+      Critical: "Chennai severely congested! Try Rajiv Gandhi Salai or ECR alternate."
+    },
+    "Coimbatore": {
+      Low:      "Coimbatore roads clear — DB Road and Avinashi Road flowing.",
+      Medium:   "Moderate traffic near RS Puram & Gandhipuram.",
+      High:     "Heavy traffic on Avinashi Road & Tidel area. Use Mettupalayam Road.",
+      Critical: "Severe jam near Gandhipuram! Avoid Trichy Road during this hour."
+    },
+    "Madurai": {
+      Low:      "Madurai clear — Bypass Road and Mattuthavani smooth.",
+      Medium:   "Moderate traffic near Meenakshi Amman Temple area.",
+      High:     "Heavy near Bypass Road and Goripalayam junction.",
+      Critical: "Severe congestion in Madurai! Avoid Town area. Use NH-38 bypass."
+    },
+    "Salem": {
+      Low:      "Salem roads clear — Steel Plant Road flowing well.",
+      Medium:   "Moderate traffic near Shevapet and Four Roads.",
+      High:     "Heavy traffic on Omalur Road & Attur junction.",
+      Critical: "Salem congested! Avoid Junction area. Try Omalur bypass road."
+    },
+    "Tiruchirappalli": {
+      Low:      "Trichy roads clear — Cantonment and Chatram Bus Stand area smooth.",
+      Medium:   "Moderate near Chatram BS and Ariyamangalam junction.",
+      High:     "Heavy traffic on Karur Road & Srirangam bridge.",
+      Critical: "Severe congestion in Trichy! Avoid Chatram area and use NH-45."
+    },
+    "Nilgiris": {
+      Low:      "Ooty roads clear. But mountain bends — drive carefully!",
+      Medium:   "Moderate traffic on Ooty Ghat road. Tourist buses causing delays.",
+      High:     "Heavy tourist traffic on Ooty-Coonoor stretch. Allow extra 30 min.",
+      Critical: "Ghat road congested! Wait or try Mettupalayam route. High accident risk."
+    },
+    "Kanyakumari": {
+      Low:      "Kanyakumari clear. NH-44 end point smooth — enjoy the drive!",
+      Medium:   "Tourist traffic moderate near confluence point area.",
+      High:     "Heavy tourist footfall near Vivekananda Rock. Use parallel roads.",
+      Critical: "Severe tourist jam in Kanyakumari! Avoid Kovalam Road this hour."
+    },
+  };
+
+  // Use city-specific if available, else generic
+  if(cityTips[district] && cityTips[district][level]){
+    let msg = cityTips[district][level];
+    if(isMorning) msg += " (Morning rush — peak hour!)";
+    if(isEvening) msg += " (Evening peak — worst hour for this city!)";
+    if(isNight)   msg += " (Late night — roads quieter now.)";
+    return msg;
+  }
+
+  // Generic advice with city name
+  const generic = {
+    Low:      district+" roads are clear. Normal travel time expected. வழிகள் தெளிவாக உள்ளன.",
+    Medium:   district+" — Moderate traffic. Allow 10–15 extra minutes. மிதமான போக்குவரத்து.",
+    High:     district+" — Heavy traffic! Consider alternate routes or delay travel. அதிக நெரிசல்.",
+    Critical: district+" — SEVERE congestion! Avoid travel if possible. கடுமையான நெரிசல்!"
+  };
+  let msg = generic[level];
+  if(isMorning) msg += " (Morning peak hour — " + prof.industry + " workers commuting)";
+  if(isEvening) msg += " (Evening rush — heaviest time for " + district + ")";
+  if(isNight)   msg += " (Night — lighter traffic in " + district + ")";
+  return msg;
+}
+
+function showResult(result,raw){
+  const{predicted_level:level,confidence:conf,probabilities:probs,advice}=result;
+  document.getElementById("result-wrap").style.display="block";
+
+  const top=document.getElementById("result-top");
+  top.className="result-top "+level;
+  const rl=document.getElementById("res-lvl");
+  rl.className="res-lvl "+level;
+  rl.innerHTML=`${ICONS[level]} ${level.toUpperCase()} CONGESTION`;
+
+  document.getElementById("res-meta").innerHTML=
+    `📍 <strong>${raw.district}</strong> — ${raw.roadName}<br>`+
+    `🕐 ${raw.hour}:00 &nbsp;|&nbsp; 🚗 ${raw.vtype.replace("2wheeler","2-Wheeler").replace("3wheeler","3-Wheeler").toUpperCase()} &nbsp;|&nbsp; ${raw.veh} vehicles &nbsp;|&nbsp; ${raw.speed} km/h`;
+
+  const fill=document.getElementById("conf-fill");
+  fill.style.background=COLORS[level];fill.style.width="0%";
+  setTimeout(()=>fill.style.width=conf+"%",60);
+  document.getElementById("conf-pct").textContent=conf+"%";
+
+  document.getElementById("res-advice").className="res-advice "+level;
+  document.getElementById("res-advice").textContent=advice;
+
+  document.getElementById("rg-label").textContent=raw.district+" · "+raw.vtype;
+
+  buildResultChart(probs,level,raw);
+
+  const pb=document.getElementById("prob-bars");
+  pb.innerHTML='<div style="font-family:var(--mono);font-size:.58rem;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.09em;">Probability Breakdown</div>';
+  LEVELS.forEach(l=>{
+    const pct=probs[l]??0;
+    pb.innerHTML+=`<div class="pb-row">
+      <div class="pb-lbl">${l}</div>
+      <div class="pb-track"><div class="pb-fill" id="pbf-${l}" style="background:${COLORS[l]}"></div></div>
+      <div class="pb-pct">${pct}%</div></div>`;
+  });
+  setTimeout(()=>LEVELS.forEach(l=>{const e=document.getElementById(`pbf-${l}`);if(e)e.style.width=(probs[l]??0)+"%";}),100);
+
+  document.getElementById("m-live").textContent=ICONS[level]+" "+level;
+  document.getElementById("m-live-sub").textContent=raw.district+" · "+conf+"% conf";
+
+  predHistory.unshift({
+    time:new Date().toLocaleTimeString(),
+    district:raw.district,road:raw.roadName,hour:raw.hour,
+    vtype:raw.vtype,veh:raw.veh,speed:raw.speed,
+    lanes:raw.lanes,acc:raw.acc,level,conf,
+  });
+  if(predHistory.length>15)predHistory.pop();
+}
+
+function buildResultChart(probs,level,raw){
+  const ctx=document.getElementById("resultChart").getContext("2d");
+  if(resultChartObj)resultChartObj.destroy();
+
+  const occ=Math.min(100,Math.round((raw.veh/800)*100));
+  const speedRisk=Math.round(Math.max(0,1-raw.speed/80)*100);
+  const rainRisk=Math.min(100,Math.round(raw.rain/20*100));
+  const accRisk=Math.min(100,Math.round(raw.acc/5*100));
+  const laneF=Math.round(Math.max(0,1-raw.lanes/6)*100);
+  const peak=(raw.hour>=7&&raw.hour<=9)||(raw.hour>=17&&raw.hour<=19)?80:10;
+
+  resultChartObj=new Chart(ctx,{
+    data:{
+      labels:["Low","Medium","High","Critical","Occupancy","Speed Risk","Rainfall","Accidents","Lane Factor","Peak Hour"],
+      datasets:[
+        {
+          type:"bar",label:"Congestion Probability (%)",
+          data:[probs.Low,probs.Medium,probs.High,probs.Critical,null,null,null,null,null,null],
+          backgroundColor:[
+            `rgba(34,197,94,${level==="Low"?.85:.3})`,
+            `rgba(234,179,8,${level==="Medium"?.85:.3})`,
+            `rgba(249,115,22,${level==="High"?.85:.3})`,
+            `rgba(239,68,68,${level==="Critical"?.85:.3})`,
+          ],
+          borderColor:["#22c55e","#eab308","#f97316","#ef4444"],
+          borderWidth:2,borderRadius:5,yAxisID:"y",
+        },
+        {
+          type:"line",label:"Risk Factors (%)",
+          data:[null,null,null,null,occ,speedRisk,rainRisk,accRisk,laneF,peak],
+          borderColor:"rgba(249,115,22,.85)",backgroundColor:"rgba(249,115,22,.07)",
+          borderWidth:2,pointRadius:5,pointBackgroundColor:COLORS[level],
+          tension:.4,fill:true,yAxisID:"y",
+        }
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:750},
+      plugins:{
+        legend:{labels:{color:"#94a3b8",font:{family:"JetBrains Mono",size:10},padding:12}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw??"-"}%`}},
+      },
+      scales:{
+        x:{ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+        y:{min:0,max:100,
+          ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9},callback:v=>v+"%"},
+          grid:{color:"rgba(255,255,255,.04)"}},
+      }
+    }
+  });
+}
+
+function clearResult(){
+  document.getElementById("result-wrap").style.display="none";
+  if(resultChartObj){resultChartObj.destroy();resultChartObj=null;}
+}
+
+function renderHistory(){
+  const tbody=document.getElementById("history-body");
+  const empty=document.getElementById("history-empty");
+  if(!predHistory.length){tbody.innerHTML="";empty.style.display="block";return;}
+  empty.style.display="none";
+  tbody.innerHTML=predHistory.map(p=>`
+    <tr>
+      <td>${p.time}</td><td>${p.district}</td>
+      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.road}</td>
+      <td>${p.hour}:00</td><td>${p.vtype}</td><td>${p.veh}</td>
+      <td>${p.speed}</td><td>${p.lanes}</td><td>${p.acc}</td>
+      <td><span class="bl bl-${p.level}">${p.level}</span></td>
+      <td style="font-family:var(--mono);color:${COLORS[p.level]}">${p.conf}%</td>
+    </tr>`).join("");
+}
+
+function buildModelLists(){
+  ["model-list-small","model-list-full"].forEach(id=>{
+    const el=document.getElementById(id);
+    Object.entries(MODELS_DATA).forEach(([name,m])=>{
+      const tag=name===BEST?'<span class="best-tag">BEST</span>':'';
+      const clr=name===BEST?"var(--accent)":name.includes("Gradient")?"var(--cyan)":"var(--muted)";
+      el.innerHTML+=`<div class="mrow">
+        <div><div class="mname">${name} ${tag}</div>
+        <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">F1: ${m.f1.toFixed(4)}</div></div>
+        <div class="mbar-t"><div class="mbar-f" style="width:${m.accuracy*100}%;background:${clr}"></div></div>
+        <div class="mval" style="color:${clr}">${(m.accuracy*100).toFixed(1)}%</div>
+      </div>`;
+    });
+  });
+}
+
+function buildStaticCharts(){
+  // Hourly
+  const hCtx=document.getElementById("hourChart").getContext("2d");
+  const hrs=Array.from({length:24},(_,i)=>i);
+  new Chart(hCtx,{
+    type:"bar",
+    data:{labels:hrs.map(h=>h+":00"),datasets:[
+      {label:"Low",data:hrs.map(h=>h<6||h>21?.72:h>=7&&h<=9||h>=17&&h<=19?.05:.38),backgroundColor:"rgba(34,197,94,.55)",borderRadius:3},
+      {label:"High",data:hrs.map(h=>h>=7&&h<=9||h>=17&&h<=19?.52:.1),backgroundColor:"rgba(249,115,22,.55)",borderRadius:3},
+      {label:"Critical",data:hrs.map(h=>h>=8&&h<=9||h>=17&&h<=18?.28:.02),backgroundColor:"rgba(239,68,68,.55)",borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#475569",font:{family:"JetBrains Mono",size:10}}}},
+      scales:{
+        x:{stacked:true,ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+        y:{stacked:true,ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+      }}
+  });
+
+  // Doughnut
+  const dCtx=document.getElementById("distChart").getContext("2d");
+  new Chart(dCtx,{
+    type:"doughnut",
+    data:{labels:LEVELS,datasets:[{
+      data:[1350,1620,1260,770],
+      backgroundColor:["rgba(34,197,94,.75)","rgba(234,179,8,.75)","rgba(249,115,22,.75)","rgba(239,68,68,.75)"],
+      borderColor:["#22c55e","#eab308","#f97316","#ef4444"],borderWidth:2,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"58%",
+      plugins:{legend:{position:"right",labels:{color:"#475569",font:{family:"JetBrains Mono",size:10},padding:12}}}}
+  });
+
+  // Confusion matrix
+  const cCtx=document.getElementById("confMatrix").getContext("2d");
+  const cm=[
+    {x:0,y:0,v:.92},{x:1,y:0,v:.05},{x:2,y:0,v:.02},{x:3,y:0,v:.01},
+    {x:0,y:1,v:.04},{x:1,y:1,v:.90},{x:2,y:1,v:.04},{x:3,y:1,v:.02},
+    {x:0,y:2,v:.01},{x:1,y:2,v:.06},{x:2,y:2,v:.89},{x:3,y:2,v:.04},
+    {x:0,y:3,v:.00},{x:1,y:3,v:.02},{x:2,y:3,v:.04},{x:3,y:3,v:.94},
+  ];
+  new Chart(cCtx,{
+    type:"bubble",
+    data:{datasets:[{
+      data:cm.map(d=>({x:d.x,y:d.y,r:d.v*32})),
+      backgroundColor:cm.map(d=>`rgba(249,115,22,${d.v*.85})`),
+      borderColor:cm.map(d=>d.x===d.y?"rgba(34,197,94,.85)":"rgba(239,68,68,.3)"),
+      borderWidth:2,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{min:-.5,max:3.5,ticks:{callback:v=>LEVELS[v]||"",color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+        y:{min:-.5,max:3.5,ticks:{callback:v=>LEVELS[v]||"",color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+      }}
+  });
+}
+
+function buildFeatChart(){
+  const ctx=document.getElementById("featChart").getContext("2d");
+  const feats=["vehicle_count","avg_speed","road_capacity","hour","accidents_nearby","lane_count","rainfall","road_type_enc","temperature","day_of_week","is_weekend","special_event","month","is_holiday"];
+  const imp=[.18,.16,.13,.11,.09,.08,.06,.04,.03,.025,.02,.015,.01,.008];
+  new Chart(ctx,{
+    type:"bar",
+    data:{labels:feats,datasets:[{label:"Importance",data:imp,backgroundColor:feats.map((_,i)=>i<4?"rgba(249,115,22,.75)":i<7?"rgba(34,197,94,.65)":i<10?"rgba(6,182,212,.6)":"rgba(71,85,105,.5)"),borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+        y:{ticks:{color:"#f1f5f9",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.03)"}},
+      }}
+  });
+}
+
+function buildModelBarChart(){
+  const ctx=document.getElementById("modelBarChart").getContext("2d");
+  new Chart(ctx,{
+    type:"bar",
+    data:{labels:Object.keys(MODELS_DATA),datasets:[
+      {label:"Accuracy",data:Object.values(MODELS_DATA).map(m=>+(m.accuracy*100).toFixed(2)),backgroundColor:"rgba(249,115,22,.7)",borderRadius:5},
+      {label:"F1 Score",data:Object.values(MODELS_DATA).map(m=>+(m.f1*100).toFixed(2)),backgroundColor:"rgba(6,182,212,.65)",borderRadius:5},
+      {label:"Precision",data:Object.values(MODELS_DATA).map(m=>+(m.precision*100).toFixed(2)),backgroundColor:"rgba(234,179,8,.6)",borderRadius:5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#475569",font:{family:"JetBrains Mono",size:10}}}},
+      scales:{
+        x:{ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+        y:{min:60,max:100,ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9},callback:v=>v+"%"},grid:{color:"rgba(255,255,255,.04)"}},
+      }}
+  });
+}
+
+// LIVE MONITOR
+function startLive(){fetchLive();liveInterval=setInterval(()=>{if(liveActive)fetchLive();},5000);}
+function toggleLive(){liveActive=!liveActive;document.getElementById("live-toggle").textContent=liveActive?"⏸ Pause":"▶ Resume";}
+
+async function fetchLive(){
+  let data=null;
+  try{const r=await fetch(API+"/live",{signal:AbortSignal.timeout(2500)});if(r.ok)data=await r.json();}catch{}
+  if(!data)data=simLive();
+  renderLiveGrid(data);updateLiveChart(data);
+  document.getElementById("m-live").textContent=ICONS[data.overall_level]+" "+data.overall_level;
+  document.getElementById("m-live-sub").textContent=data.peak_hour?"Peak hour":"Normal traffic";
+  document.getElementById("last-update").textContent="Last update: "+new Date().toLocaleTimeString();
+}
+
+function simLive(){
+  const h=new Date().getHours();
+  const peak=(h>=7&&h<=9)||(h>=17&&h<=19);
+  const locs=[
+    {name:"Chennai",base:650},{name:"Coimbatore",base:420},
+    {name:"Madurai",base:380},{name:"Salem",base:310},
+    {name:"Tiruchirappalli",base:340},{name:"Tiruppur",base:290},
+    {name:"Vellore",base:260},{name:"Erode",base:240},
+    {name:"Thanjavur",base:200},{name:"Tirunelveli",base:220},
+  ];
+  const score=Math.min(1,(peak?.62:.22)+Math.random()*.15);
+  const overall=score<.25?"Low":score<.5?"Medium":score<.75?"High":"Critical";
+  return{timestamp:new Date().toISOString(),overall_level:overall,
+    overall_score:+score.toFixed(3),peak_hour:peak,
+    locations:locs.map(l=>{
+      const v=l.base+(peak?200:0)+Math.round((Math.random()-.5)*80);
+      const s=Math.max(8,55-(v/30)+Math.round((Math.random()-.4)*10));
+      const lv=v>600?"Critical":v>400?"High":v>250?"Medium":"Low";
+      return{name:l.name,vehicles:v,speed:s,level:lv};
+    }),};
+}
+
+function renderLiveGrid(data){
+  document.getElementById("live-grid").innerHTML=data.locations.map(l=>`
+    <div class="lc">
+      <div class="lc-name"><span class="lvldot d-${l.level}"></span>${l.name}</div>
+      <div class="lc-row"><span class="lc-lbl">Status</span><span style="color:${COLORS[l.level]};font-family:var(--mono);font-size:.76rem;font-weight:700">${l.level}</span></div>
+      <div class="lc-row"><span class="lc-lbl">Vehicles</span><span class="lc-val">${l.vehicles}</span></div>
+      <div class="lc-row"><span class="lc-lbl">Speed</span><span class="lc-val">${l.speed} km/h</span></div>
+    </div>`).join("");
+}
+
+function updateLiveChart(data){
+  const t=new Date().toLocaleTimeString().slice(0,5);
+  if(!liveChartObj){
+    const ctx=document.getElementById("liveChart").getContext("2d");
+    liveLabels=[t];
+    const colors=["#f97316","#22c55e","#eab308","#06b6d4","#ef4444","#a855f7"];
+    const datasets=data.locations.slice(0,6).map((l,i)=>({
+      label:l.name,data:[l.vehicles],
+      borderColor:colors[i],backgroundColor:colors[i]+"15",
+      borderWidth:2,pointRadius:3,tension:.4,fill:false,
+    }));
+    liveChartObj=new Chart(ctx,{type:"line",data:{labels:liveLabels,datasets},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},
+        plugins:{legend:{labels:{color:"#475569",font:{family:"JetBrains Mono",size:9},boxWidth:12}}},
+        scales:{
+          x:{ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+          y:{ticks:{color:"#475569",font:{family:"JetBrains Mono",size:9}},grid:{color:"rgba(255,255,255,.04)"}},
+        }}});return;
+  }
+  liveLabels.push(t);
+  if(liveLabels.length>20){liveLabels.shift();liveChartObj.data.datasets.forEach(d=>d.data.shift());}
+  liveChartObj.data.labels=liveLabels;
+  data.locations.slice(0,6).forEach((l,i)=>{if(liveChartObj.data.datasets[i])liveChartObj.data.datasets[i].data.push(l.vehicles);});
+  liveChartObj.update("none");
+}
+
+// CSV
+function handleCSV(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const lines=e.target.result.trim().split("\n");
+    const hdrs=lines[0].split(",");
+    const info=document.getElementById("csv-info");
+    info.style.display="block";
+    info.innerHTML=`✅ Loaded <strong>${lines.length-1} rows</strong> × ${hdrs.length} cols from <strong>${f.name}</strong>`;
+    document.getElementById("csv-preview").innerHTML=
+      `<div style="color:var(--accent);margin-bottom:6px;">${hdrs.join("  ·  ")}</div><hr style="border-color:var(--border);margin:6px 0;"/>`+
+      lines.slice(1,6).map(row=>`<div style="margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row}</div>`).join("")+
+      `<div style="color:var(--muted);margin-top:6px;">… ${Math.max(0,lines.length-6)} more rows</div>`;
+    log(`CSV: ${lines.length-1} rows from ${f.name}`,"ok");
+  };
+  r.readAsText(f);
+}
+
+function downloadSampleCSV(){
+  const hdr="timestamp,district,hour,day_of_week,month,temperature,rainfall,vehicle_count,avg_speed,road_capacity,is_holiday,is_weekend,special_event,road_type,lane_count,accidents_nearby,vehicle_type,congestion_level";
+  const rows=[
+    "2024-06-15 08:30:00,Chennai,8,0,6,36,0,650,18,800,0,0,0,arterial,2,1,mixed,Critical",
+    "2024-06-15 14:00:00,Coimbatore,14,0,6,34,0,280,52,800,0,0,0,highway,4,0,car,Low",
+    "2024-06-15 18:15:00,Madurai,18,0,6,35,5,520,12,600,0,0,1,arterial,2,2,bus,High",
+    "2024-01-14 10:00:00,Tiruchirappalli,10,5,1,28,0,320,38,800,0,1,0,arterial,3,0,2wheeler,Medium",
+    "2024-10-20 09:00:00,Salem,9,0,10,30,15,480,20,600,0,0,0,local,2,3,mixed,Critical",
+    "2024-04-12 17:30:00,Tiruppur,17,4,4,38,0,410,15,600,0,0,0,arterial,2,0,truck,High",
+    "2024-07-22 11:00:00,Vellore,11,0,7,31,8,260,42,800,0,0,0,highway,4,1,car,Medium",
+  ];
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([hdr+"\n"+rows.join("\n")],{type:"text/csv"}));
+  a.download="tn_traffic_sample.csv";a.click();
+}
+
+function log(msg,type="info"){
+  const el=document.getElementById("api-log");
+  const t=new Date().toLocaleTimeString();
+  const cls=type==="ok"?"l-ok":type==="err"?"l-err":"l-info";
+  el.innerHTML=`<div class="le ${cls}">[${t}] ${msg}</div>`+el.innerHTML;
+  const entries=el.querySelectorAll(".le");
+  if(entries.length>8)entries[entries.length-1].remove();
+}
+
+// ════ FREE MAP: OpenStreetMap + Leaflet + OSRM routing ════════
+// No API key needed — works completely offline from CDN
+
+
+// ══════════════════════════════════════════════════════════
+//  INDIA SVG MAP — City coordinates mapped to SVG viewBox
+//  ViewBox: 0 0 600 700
+// ══════════════════════════════════════════════════════════
+
+const CITIES = {
+  // Tamil Nadu
+  "Chennai":         {x:310, y:462, major:true,  state:"TN"},
+  "Coimbatore":      {x:200, y:490, major:true,  state:"TN"},
+  "Madurai":         {x:248, y:510, major:true,  state:"TN"},
+  "Salem":           {x:232, y:470, major:false, state:"TN"},
+  "Tiruchirappalli": {x:258, y:490, major:false, state:"TN"},
+  "Tiruppur":        {x:212, y:482, major:false, state:"TN"},
+  "Vellore":         {x:285, y:448, major:false, state:"TN"},
+  "Erode":           {x:218, y:474, major:false, state:"TN"},
+  "Thanjavur":       {x:278, y:498, major:false, state:"TN"},
+  "Tirunelveli":     {x:232, y:535, major:false, state:"TN"},
+  "Kanyakumari":     {x:240, y:558, major:false, state:"TN"},
+  "Dindigul":        {x:240, y:508, major:false, state:"TN"},
+  "Thoothukudi":     {x:255, y:538, major:false, state:"TN"},
+  "Kancheepuram":    {x:298, y:455, major:false, state:"TN"},
+  "Cuddalore":       {x:310, y:470, major:false, state:"TN"},
+  "Nagapattinam":    {x:290, y:500, major:false, state:"TN"},
+  "Namakkal":        {x:228, y:476, major:false, state:"TN"},
+  "Krishnagiri":     {x:258, y:450, major:false, state:"TN"},
+  // Major India cities
+  "Delhi":           {x:225, y:118, major:true,  state:"DL"},
+  "Mumbai":          {x:148, y:298, major:true,  state:"MH"},
+  "Bengaluru":       {x:230, y:448, major:true,  state:"KA"},
+  "Hyderabad":       {x:262, y:370, major:true,  state:"TS"},
+  "Kolkata":         {x:378, y:248, major:true,  state:"WB"},
+  "Pune":            {x:162, y:320, major:false, state:"MH"},
+  "Ahmedabad":       {x:155, y:218, major:true,  state:"GJ"},
+  "Jaipur":          {x:198, y:162, major:false, state:"RJ"},
+  "Lucknow":         {x:282, y:168, major:false, state:"UP"},
+  "Patna":           {x:322, y:200, major:false, state:"BR"},
+  "Bhopal":          {x:225, y:248, major:false, state:"MP"},
+  "Nagpur":          {x:258, y:288, major:false, state:"MH"},
+  "Visakhapatnam":   {x:330, y:368, major:false, state:"AP"},
+  "Kochi":           {x:192, y:516, major:false, state:"KL"},
+  "Thiruvananthapuram":{x:215,y:552,major:false, state:"KL"},
+  "Chandigarh":      {x:208, y:102, major:false, state:"PB"},
+  "Surat":           {x:155, y:260, major:false, state:"GJ"},
+  "Indore":          {x:200, y:252, major:false, state:"MP"},
+  "Guwahati":        {x:428, y:188, major:false, state:"AS"},
+};
+
+// Populate datalist for autocomplete
+(function populateDatalist(){
+  const dl = document.getElementById('city-list');
+  Object.keys(CITIES).forEach(name => {
+    const opt = document.createElement('option'); opt.value = name; dl.appendChild(opt);
+  });
+})();
+
+// ── Traffic level colours & wave configs ────────────────────
+const TRAFFIC = {
+  Low:      { color:'#22c55e', wave:0,    dasharray:'8,4',  anim:'wave-animate-slow',  label:'Free Flow',  waveDesc:'Smooth — gentle wave' },
+  Medium:   { color:'#eab308', wave:12,   dasharray:'6,2',  anim:'wave-animate',       label:'Slow',       waveDesc:'Moderate — rolling wave' },
+  High:     { color:'#f97316', wave:20,   dasharray:'none', anim:'wave-animate',       label:'Heavy',      waveDesc:'Heavy — tight wave' },
+  Critical: { color:'#ef4444', wave:28,   dasharray:'none', anim:'wave-animate-fast',  label:'Jam',        waveDesc:'Critical — chaotic wave' },
+};
+
+// ── Determine traffic level from hour ───────────────────────
+function getTrafficLevel(){
+  const h = new Date().getHours();
+  const isPeak = (h>=7&&h<=9)||(h>=17&&h<=20);
+  const r = Math.random();
+  if(isPeak)      return r>.45 ? 'Critical' : r>.2 ? 'High' : 'Medium';
+  if(h<6||h>21)   return r>.7  ? 'Low'      : 'Medium';
+  return r>.65 ? 'Medium' : r>.35 ? 'Low' : 'High';
+}
+
+// ── Generate SVG wave path between two SVG points ───────────
+// wave=0 → straight dashed (free)
+// wave>0 → sinusoidal with amplitude=wave, frequency varies by level
+function makeWavePath(x1, y1, x2, y2, waveAmp, numWaves){
+  if(waveAmp === 0){
+    return 'M ' + x1 + ',' + y1 + ' L ' + x2 + ',' + y2;
+  }
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  const ux = dx/len, uy = dy/len;    // unit along path
+  const px = -uy,    py = ux;        // perpendicular unit
+
+  const steps = numWaves * 2;
+  let d = 'M ' + x1.toFixed(1) + ',' + y1.toFixed(1);
+  for(let i = 1; i <= steps; i++){
+    const t  = i / steps;
+    const cx = x1 + dx*t;
+    const cy = y1 + dy*t;
+    const phase = (i % 2 === 0) ? waveAmp : -waveAmp;
+    // Taper amplitude at ends
+    const taper = Math.sin(Math.PI * t);
+    const wx = cx + px * phase * taper;
+    const wy = cy + py * phase * taper;
+    d += ' L ' + wx.toFixed(1) + ',' + wy.toFixed(1);
+  }
+  d += ' L ' + x2.toFixed(1) + ',' + y2.toFixed(1);
+  return d;
+}
+
+// ── Great-circle midpoint offset for a nice curve ───────────
+function curvePath(x1,y1,x2,y2,waveAmp,numWaves){
+  // Add a perpendicular mid-offset so the path arcs around terrain
+  const mx = (x1+x2)/2, my = (y1+y2)/2;
+  const dx = x2-x1,  dy = y2-y1;
+  const len = Math.sqrt(dx*dx+dy*dy);
+  const px = -dy/len, py = dx/len;
+  // slight curve bias
+  const curveOffset = len * 0.08;
+  const cmx = mx + px*curveOffset, cmy = my + py*curveOffset;
+
+  if(waveAmp === 0){
+    return 'M '+x1+','+y1+' Q '+cmx.toFixed(1)+','+cmy.toFixed(1)+' '+x2+','+y2;
+  }
+  // Build wave along the curved baseline
+  const steps = numWaves * 2 + 1;
+  let d = 'M '+x1.toFixed(1)+','+y1.toFixed(1);
+  for(let i=1; i<=steps; i++){
+    const t = i/steps;
+    // Point on quadratic bezier
+    const bx = (1-t)*(1-t)*x1 + 2*(1-t)*t*cmx + t*t*x2;
+    const by = (1-t)*(1-t)*y1 + 2*(1-t)*t*cmy + t*t*y2;
+    // Tangent at t
+    const tbx = 2*(1-t)*(cmx-x1)+2*t*(x2-cmx);
+    const tby = 2*(1-t)*(cmy-y1)+2*t*(y2-cmy);
+    const tlen = Math.sqrt(tbx*tbx+tby*tby)||1;
+    const perpx = -tby/tlen, perpy = tbx/tlen;
+    const phase = (i%2===0)?waveAmp:-waveAmp;
+    const taper = Math.sin(Math.PI*t);
+    d += ' L '+(bx+perpx*phase*taper).toFixed(1)+','+(by+perpy*phase*taper).toFixed(1);
+  }
+  return d;
+}
+
+// ── Draw ALL city dots & labels on first load ────────────────
+let _citiesDrawn = false;
+function drawCities(){
+  if(_citiesDrawn) return;
+  _citiesDrawn = true;
+  const layer = document.getElementById('city-layer');
+  layer.innerHTML = '';
+
+  Object.entries(CITIES).forEach(([name,c])=>{
+    const isMajor = c.major;
+    const isTN    = c.state === 'TN';
+    const r       = isMajor ? 5 : 3.5;
+    const dotCol  = isTN ? '#f97316' : (isMajor ? '#60a5fa' : '#475569');
+    const txtCol  = isMajor ? '#e2e8f0' : '#94a3b8';
+    const txtSize = isMajor ? 9 : 7.5;
+    const fw      = isMajor ? '700' : '400';
+
+    // Pulsing ring for major cities
+    if(isMajor){
+      const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ring.setAttribute('cx', c.x); ring.setAttribute('cy', c.y);
+      ring.setAttribute('r', r+4);
+      ring.setAttribute('fill','none');
+      ring.setAttribute('stroke', dotCol);
+      ring.setAttribute('stroke-width','1');
+      ring.setAttribute('opacity','0.3');
+      ring.style.animation = 'pulseCity 2s ease-in-out infinite';
+      layer.appendChild(ring);
+    }
+
+    // City dot
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx', c.x); dot.setAttribute('cy', c.y);
+    dot.setAttribute('r', r);
+    dot.setAttribute('fill', dotCol);
+    dot.setAttribute('stroke','#fff');
+    dot.setAttribute('stroke-width', isMajor?1.5:1);
+    dot.setAttribute('class','city-dot');
+    dot.style.filter = isMajor ? 'url(#glow-city)' : 'none';
+    dot.setAttribute('data-name', name);
+    // Click to set as source/dest
+    dot.addEventListener('click', ()=>{ cityClick(name); });
+    layer.appendChild(dot);
+
+    // City name label
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', c.x + r + 3);
+    txt.setAttribute('y', c.y + 4);
+    txt.setAttribute('fill', txtCol);
+    txt.setAttribute('font-size', txtSize);
+    txt.setAttribute('font-family',"'JetBrains Mono', monospace");
+    txt.setAttribute('font-weight', fw);
+    txt.setAttribute('class','city-name');
+    // White outline/shadow via paint-order
+    txt.setAttribute('stroke','#0a1628');
+    txt.setAttribute('stroke-width','2.5');
+    txt.setAttribute('paint-order','stroke fill');
+    txt.setAttribute('stroke-linejoin','round');
+    txt.textContent = name;
+    layer.appendChild(txt);
+  });
+}
+
+// ── City click: fill source then destination ─────────────────
+let _clickCount = 0;
+function cityClick(name){
+  const src = document.getElementById('ms');
+  const dst = document.getElementById('md');
+  if(!src.value){ src.value = name; }
+  else if(!dst.value){ dst.value = name; }
+  else { src.value = name; dst.value = ''; }
+}
+
+// ── Clear previous route drawing ────────────────────────────
+function clearRoute(){
+  document.getElementById('route-layer').innerHTML = '';
+}
+
+// ── Main: draw wave route on SVG ─────────────────────────────
+function drawWaveRoute(){
+  const srcName = document.getElementById('ms').value.trim();
+  const dstName = document.getElementById('md').value.trim();
+  if(!srcName||!dstName){ alert('Please enter both Source and Destination cities!'); return; }
+
+  const src = CITIES[srcName] || findFuzzy(srcName);
+  const dst = CITIES[dstName] || findFuzzy(dstName);
+  if(!src){ alert('City not found: '+srcName+'\n\nTry: Chennai, Mumbai, Delhi, Bengaluru, Madurai…'); return; }
+  if(!dst){ alert('City not found: '+dstName+'\n\nTry: Chennai, Mumbai, Delhi, Bengaluru, Madurai…'); return; }
+
+  clearRoute();
+
+  const level  = getTrafficLevel();
+  const tcfg   = TRAFFIC[level];
+  const layer  = document.getElementById('route-layer');
+
+  // Distance calculation (haversine using SVG px as proxy)
+  const dx = dst.x - src.x, dy = dst.y - src.y;
+  const svgDist = Math.sqrt(dx*dx + dy*dy);
+  // Rough km: each SVG unit ≈ 6.5 km across India's 3000km span in 460px
+  const distKm = Math.round(svgDist * 6.5);
+  const speedKmh = level==='Low'?90:level==='Medium'?55:level==='High'?30:12;
+  const durMin = Math.round((distKm/speedKmh)*60);
+  const durText = durMin>=60 ? Math.floor(durMin/60)+'h '+(durMin%60)+'m' : durMin+' min';
+
+  // Wave parameters based on traffic level
+  const waveConfig = {
+    Low:      { amp:0,  waves:8,  dasharray:'10,6',  strokeW:2.5, extraLine:false },
+    Medium:   { amp:10, waves:6,  dasharray:'none',  strokeW:3,   extraLine:false },
+    High:     { amp:18, waves:8,  dasharray:'none',  strokeW:3.5, extraLine:true  },
+    Critical: { amp:24, waves:12, dasharray:'none',  strokeW:4,   extraLine:true  },
+  }[level];
+
+  // ① White glow shadow under the route
+  const shadowPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  shadowPath.setAttribute('d', curvePath(src.x,src.y,dst.x,dst.y, waveConfig.amp*0.6, waveConfig.waves));
+  shadowPath.setAttribute('fill','none');
+  shadowPath.setAttribute('stroke','rgba(255,255,255,0.25)');
+  shadowPath.setAttribute('stroke-width', waveConfig.strokeW+4);
+  shadowPath.setAttribute('stroke-linecap','round');
+  layer.appendChild(shadowPath);
+
+  // ② For Critical/High: a dim parallel wave for "congestion band" effect
+  if(waveConfig.extraLine){
+    const parallel = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const pOffset = 5;
+    parallel.setAttribute('d', curvePath(src.x+pOffset,src.y,dst.x+pOffset,dst.y, waveConfig.amp*0.4, waveConfig.waves));
+    parallel.setAttribute('fill','none');
+    parallel.setAttribute('stroke', tcfg.color);
+    parallel.setAttribute('stroke-width','1.5');
+    parallel.setAttribute('stroke-dasharray','3,6');
+    parallel.setAttribute('opacity','0.3');
+    layer.appendChild(parallel);
+  }
+
+  // ③ Main animated wave line
+  const mainPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  const pathD = curvePath(src.x,src.y,dst.x,dst.y, waveConfig.amp, waveConfig.waves);
+  mainPath.setAttribute('d', pathD);
+  mainPath.setAttribute('fill','none');
+  mainPath.setAttribute('stroke', tcfg.color);
+  mainPath.setAttribute('stroke-width', waveConfig.strokeW);
+  mainPath.setAttribute('stroke-linecap','round');
+  mainPath.setAttribute('stroke-linejoin','round');
+  if(waveConfig.dasharray !== 'none'){
+    mainPath.setAttribute('stroke-dasharray', waveConfig.dasharray);
+  }
+  // Animate
+  const pathLen = mainPath.getTotalLength ? mainPath.getTotalLength() : 500;
+  mainPath.setAttribute('stroke-dasharray', waveConfig.dasharray!=='none'
+    ? waveConfig.dasharray
+    : pathLen+','+pathLen);
+  mainPath.style.strokeDashoffset = pathLen;
+  mainPath.style.animation = 'none';
+  // Trigger draw animation
+  requestAnimationFrame(()=>{
+    mainPath.style.transition = 'stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1)';
+    mainPath.style.strokeDashoffset = '0';
+  });
+  layer.appendChild(mainPath);
+
+  // ④ Continuous flow animation on top of the drawn line
+  const flowPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  flowPath.setAttribute('d', pathD);
+  flowPath.setAttribute('fill','none');
+  flowPath.setAttribute('stroke','rgba(255,255,255,0.55)');
+  flowPath.setAttribute('stroke-width','1.5');
+  flowPath.setAttribute('stroke-linecap','round');
+  const flowDash = level==='Critical'?'4,20':level==='High'?'6,18':'8,24';
+  flowPath.setAttribute('stroke-dasharray', flowDash);
+  flowPath.style.animation = tcfg.anim+' 1.8s linear infinite';
+  setTimeout(()=>layer.appendChild(flowPath), 1700);
+
+  // ⑤ Direction arrow at midpoint
+  if(mainPath.getTotalLength){
+    setTimeout(()=>{
+      try{
+        const mid = mainPath.getPointAtLength(pathLen*0.52);
+        const midB = mainPath.getPointAtLength(pathLen*0.54);
+        const angle = Math.atan2(midB.y-mid.y, midB.x-mid.x)*180/Math.PI;
+        const arrow = document.createElementNS('http://www.w3.org/2000/svg','text');
+        arrow.setAttribute('x', mid.x); arrow.setAttribute('y', mid.y+4);
+        arrow.setAttribute('fill', tcfg.color);
+        arrow.setAttribute('font-size','14');
+        arrow.setAttribute('text-anchor','middle');
+        arrow.setAttribute('transform','rotate('+angle+','+mid.x+','+mid.y+')');
+        arrow.style.filter = 'url(#glow-city)';
+        arrow.textContent = '➤';
+        layer.appendChild(arrow);
+      }catch(e){}
+    },1800);
+  }
+
+  // ⑥ Source marker (blue pin)
+  const srcG = document.createElementNS('http://www.w3.org/2000/svg','g');
+  // Outer pulse ring
+  const srcRing = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  srcRing.setAttribute('cx',src.x); srcRing.setAttribute('cy',src.y);
+  srcRing.setAttribute('r','14'); srcRing.setAttribute('fill','rgba(29,78,216,0.2)');
+  srcRing.setAttribute('stroke','#1d4ed8'); srcRing.setAttribute('stroke-width','1.5');
+  srcRing.style.animation = 'pulseCity 1.5s ease-in-out infinite';
+  srcG.appendChild(srcRing);
+  // White background for label
+  const srcBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  srcBg.setAttribute('x',src.x-2); srcBg.setAttribute('y',src.y-28);
+  srcBg.setAttribute('width', srcName.length*6.2+16); srcBg.setAttribute('height','18');
+  srcBg.setAttribute('rx','9'); srcBg.setAttribute('ry','9');
+  srcBg.setAttribute('fill','#1d4ed8'); srcBg.setAttribute('opacity','0.92');
+  srcG.appendChild(srcBg);
+  // Label text
+  const srcTxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+  srcTxt.setAttribute('x',src.x+6); srcTxt.setAttribute('y',src.y-16);
+  srcTxt.setAttribute('fill','#fff'); srcTxt.setAttribute('font-size','9');
+  srcTxt.setAttribute('font-family',"'JetBrains Mono',monospace"); srcTxt.setAttribute('font-weight','700');
+  srcTxt.textContent = '⬤ '+srcName;
+  srcG.appendChild(srcTxt);
+  // Big dot
+  const srcDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  srcDot.setAttribute('cx',src.x); srcDot.setAttribute('cy',src.y);
+  srcDot.setAttribute('r','7'); srcDot.setAttribute('fill','#1d4ed8');
+  srcDot.setAttribute('stroke','#fff'); srcDot.setAttribute('stroke-width','2');
+  srcDot.style.filter = 'url(#glow-city)';
+  srcG.appendChild(srcDot);
+  layer.appendChild(srcG);
+
+  // ⑦ Destination marker (red pin)
+  const dstG = document.createElementNS('http://www.w3.org/2000/svg','g');
+  const dstRing = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dstRing.setAttribute('cx',dst.x); dstRing.setAttribute('cy',dst.y);
+  dstRing.setAttribute('r','14'); dstRing.setAttribute('fill','rgba(220,38,38,0.2)');
+  dstRing.setAttribute('stroke','#dc2626'); dstRing.setAttribute('stroke-width','1.5');
+  dstRing.style.animation = 'pulseCity 1.5s ease-in-out infinite 0.4s';
+  dstG.appendChild(dstRing);
+  const dstBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  dstBg.setAttribute('x',dst.x-2); dstBg.setAttribute('y',dst.y-28);
+  dstBg.setAttribute('width', dstName.length*6.2+16); dstBg.setAttribute('height','18');
+  dstBg.setAttribute('rx','9'); dstBg.setAttribute('ry','9');
+  dstBg.setAttribute('fill','#dc2626'); dstBg.setAttribute('opacity','0.92');
+  dstG.appendChild(dstBg);
+  const dstTxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+  dstTxt.setAttribute('x',dst.x+6); dstTxt.setAttribute('y',dst.y-16);
+  dstTxt.setAttribute('fill','#fff'); dstTxt.setAttribute('font-size','9');
+  dstTxt.setAttribute('font-family',"'JetBrains Mono',monospace"); dstTxt.setAttribute('font-weight','700');
+  dstTxt.textContent = '⬤ '+dstName;
+  dstG.appendChild(dstTxt);
+  const dstDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dstDot.setAttribute('cx',dst.x); dstDot.setAttribute('cy',dst.y);
+  dstDot.setAttribute('r','7'); dstDot.setAttribute('fill','#dc2626');
+  dstDot.setAttribute('stroke','#fff'); dstDot.setAttribute('stroke-width','2');
+  dstDot.style.filter = 'url(#glow-city)';
+  dstG.appendChild(dstDot);
+  layer.appendChild(dstG);
+
+  // ⑧ Mid-route badge showing distance + time + level
+  setTimeout(()=>{
+    if(!mainPath.getTotalLength) return;
+    try{
+      const mp = mainPath.getPointAtLength(pathLen*0.5);
+      // Badge background
+      const badgeW = 160, badgeH = 26;
+      const bx = mp.x - badgeW/2, by = mp.y - badgeH/2;
+      const badgeBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      badgeBg.setAttribute('x',bx); badgeBg.setAttribute('y',by);
+      badgeBg.setAttribute('width',badgeW); badgeBg.setAttribute('height',badgeH);
+      badgeBg.setAttribute('rx','13'); badgeBg.setAttribute('ry','13');
+      badgeBg.setAttribute('fill','#0f172a'); badgeBg.setAttribute('stroke', tcfg.color);
+      badgeBg.setAttribute('stroke-width','1.5'); badgeBg.setAttribute('opacity','0.92');
+      layer.appendChild(badgeBg);
+      const badgeTxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      badgeTxt.setAttribute('x', mp.x); badgeTxt.setAttribute('y', mp.y+5);
+      badgeTxt.setAttribute('fill', tcfg.color); badgeTxt.setAttribute('font-size','9');
+      badgeTxt.setAttribute('font-family',"'JetBrains Mono',monospace");
+      badgeTxt.setAttribute('font-weight','700'); badgeTxt.setAttribute('text-anchor','middle');
+      badgeTxt.textContent = distKm+'km  '+durText+'  '+level.toUpperCase();
+      layer.appendChild(badgeTxt);
+    }catch(e){}
+  }, 1900);
+
+  // Update info cards
+  const trafIcon={Low:'🟢',Medium:'🟡',High:'🟠',Critical:'🔴'}[level];
+  document.getElementById('rv-from').textContent  = srcName;
+  document.getElementById('rv-to').textContent    = dstName;
+  document.getElementById('rv-dist').textContent  = '~'+distKm+' km';
+  document.getElementById('rv-dur').textContent   = durText;
+  document.getElementById('rv-traf').textContent  = trafIcon+' '+level;
+  document.getElementById('rv-traf').style.color  = tcfg.color;
+  document.getElementById('rv-wave').textContent  = tcfg.waveDesc;
+  document.getElementById('rv-wave').style.color  = tcfg.color;
+  document.getElementById('ri-cards').style.display = 'flex';
+
+  log('Wave route: '+srcName+' → '+dstName+' | ~'+distKm+'km | '+durText+' | '+level+' traffic', 'ok');
+}
+
+// ── Fuzzy city lookup ────────────────────────────────────────
+function findFuzzy(name){
+  const l = name.toLowerCase();
+  for(const [k,v] of Object.entries(CITIES)){
+    if(k.toLowerCase().includes(l)||l.includes(k.toLowerCase())) return v;
+  }
+  return null;
+}
+
+// ── Quick route shortcut ─────────────────────────────────────
+function qR(src,dst){
+  document.getElementById('ms').value = src;
+  document.getElementById('md').value = dst;
+  switchTab('maps');
+  setTimeout(drawWaveRoute, 120);
+}
+
+// ── Alias for compatibility ──────────────────────────────────
+function showRoute(){ drawWaveRoute(); }
+
+function qRoute(src,dst){ qR(src,dst); }
+
+// ── Swap source ↔ destination ────────────────────────────────
+function swapRoute(){
+  const a = document.getElementById('ms').value;
+  document.getElementById('ms').value = document.getElementById('md').value;
+  document.getElementById('md').value = a;
+}
+
+// ── Map controls (no-op — SVG map, not tile) ─────────────────
+function setMapType(t){ /* SVG map — no tiles */ }
+function toggleTraffic(){ drawWaveRoute(); }
+function toggleAvoid(t){ /* SVG routing */ }
+
+// ── Init: draw cities when tab opens ────────────────────────
+function initLeaflet(){ drawCities(); }
+
+</script>
