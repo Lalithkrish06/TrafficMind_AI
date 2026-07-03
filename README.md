@@ -9,7 +9,30 @@ TrafficMind AI is a full-stack Artificial Intelligence web application that pred
 The system uses Machine Learning models trained on traffic pattern data and provides **instant congestion predictions, interactive dashboards, and route visualisation**.
 
 ---
+## 🌐 Live Demo
 
+<p align="center">
+  <a href="https://lalitrafficmindai.netlify.app">
+    <img src="https://img.shields.io/badge/🚀%20Live%20Demo-TrafficMind%20AI-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="TrafficMind AI Live Demo"/>
+  </a>
+</p>
+
+<p align="center">
+Experience <strong>TrafficMind AI</strong>, an AI-powered traffic congestion prediction platform that delivers intelligent forecasting, interactive visualizations, and real-time analytics through a modern, responsive web application.
+</p>
+
+---
+
+### 🔗 Live Application
+
+Explore the deployed application and experience the platform in action.
+
+**🌍 Live Website:**  
+https://lalitrafficmindai.netlify.app
+
+---
+
+> **Note:** This live deployment showcases the latest stable version of TrafficMind AI. The source code is actively maintained and enhanced with new features, performance improvements, and UI/UX refinements.
 # 🌐 Web Application Preview
 
 <p align="center">
